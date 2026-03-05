@@ -1,0 +1,8 @@
+{
+  "name": "Сборка",
+  "description": "A simple, secure web-based video chat optimized for smartphones.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
