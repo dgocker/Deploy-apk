@@ -238,12 +238,14 @@ export default function Login() {
       window.open(`https://t.me/${botName}?start=auth`, '_system');
   };
 
+  const [inviteInput, setInviteInput] = useState('');
+
   const handleGoogleLogin = async () => {
     try {
       const user = await GoogleAuth.signIn();
       
-      // Get invite code
-      let activeInviteCode = localStorage.getItem('pending_invite_code');
+      // Get invite code (priority: localStorage -> manual input)
+      let activeInviteCode = localStorage.getItem('pending_invite_code') || inviteInput;
       const pendingFriendCode = localStorage.getItem('pending_friend_code');
       
       // Send to backend
@@ -283,9 +285,9 @@ export default function Login() {
       } else {
         alert(data.error || 'Ошибка входа через Google');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google Sign-In Error:', error);
-      // alert('Ошибка входа через Google');
+      alert(`Ошибка входа через Google: ${error.message || JSON.stringify(error)}`);
     }
   };
   
@@ -305,10 +307,23 @@ export default function Login() {
         <h1 className="text-2xl font-semibold text-zinc-100 mb-2">Добро пожаловать</h1>
         <p className="text-zinc-400 mb-4 text-sm">Войдите через Telegram или Google</p>
         
-        {hasInvite && (
+        {hasInvite ? (
           <div className="mb-6 py-2 px-3 bg-emerald-500/10 border border-emerald-500/20 rounded-lg text-emerald-400 text-xs font-medium flex items-center justify-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"/>
             Код приглашения применен
+          </div>
+        ) : (
+          <div className="mb-4">
+             <input 
+               type="text" 
+               placeholder="Код приглашения (если есть)" 
+               value={inviteInput}
+               onChange={(e) => setInviteInput(e.target.value)}
+               className="w-full bg-zinc-800 border border-zinc-700 text-zinc-100 text-sm rounded-lg px-3 py-2 focus:outline-none focus:border-blue-500"
+             />
+             <p className="text-xs text-zinc-500 mt-1 text-left px-1">
+               Для регистрации требуется код приглашения.
+             </p>
           </div>
         )}
         
