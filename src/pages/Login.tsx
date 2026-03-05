@@ -2,17 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { registerPlugin } from '@capacitor/core';
+import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
 
-// Define interface for the plugin
-interface GoogleAuthPlugin {
-  signIn(): Promise<any>;
-  initialize(options?: any): Promise<void>;
-  signOut(): Promise<any>;
-}
-
-// Access the plugin via Capacitor core to avoid build issues with the package
-const GoogleAuth = registerPlugin<GoogleAuthPlugin>('GoogleAuth');
+// ... (remove old GoogleAuth interface and registerPlugin)
 
 declare global {
   interface Window {
@@ -31,17 +23,6 @@ export default function Login() {
   const [hasInvite, setHasInvite] = useState(false);
 
   useEffect(() => {
-    // Initialize Google Auth only if in Capacitor environment to avoid web errors
-    const isCapacitor = window.location.protocol === 'capacitor:' || 
-                        window.location.protocol === 'file:' || 
-                        (window.location.hostname === 'localhost' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
-    
-    if (isCapacitor) {
-       GoogleAuth.initialize({
-         grantOfflineAccess: true,
-       }).catch(e => console.error('Failed to initialize Google Auth', e));
-    }
-
     // 1. Immediately save invite code from URL to localStorage if present
     const searchParams = new URLSearchParams(location.search);
     const urlInviteCode = searchParams.get('invite');
@@ -213,20 +194,27 @@ export default function Login() {
         }
       })
       .catch(err => console.error('Web App Login Failed:', err));
-    } else if (!isCapacitor) {
+    } else {
         // Only inject widget if NOT in Capacitor/Mobile App
-        const script = document.createElement('script');
-        script.src = 'https://telegram.org/js/telegram-widget.js?22';
-        // Replace with your actual bot username in production
-        script.setAttribute('data-telegram-login', import.meta.env.VITE_TELEGRAM_BOT_NAME || 'samplebot');
-        script.setAttribute('data-size', 'large');
-        script.setAttribute('data-onauth', 'TelegramLoginWidget.dataOnauth(user)');
-        script.setAttribute('data-request-access', 'write');
-        script.async = true;
-        
-        if (containerRef.current) {
-          containerRef.current.innerHTML = '';
-          containerRef.current.appendChild(script);
+        // And NOT in Telegram Web App
+        const isCapacitor = window.location.protocol === 'capacitor:' || 
+                            window.location.protocol === 'file:' || 
+                            (window.location.hostname === 'localhost' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+
+        if (!isCapacitor) {
+            const script = document.createElement('script');
+            script.src = 'https://telegram.org/js/telegram-widget.js?22';
+            // Replace with your actual bot username in production
+            script.setAttribute('data-telegram-login', import.meta.env.VITE_TELEGRAM_BOT_NAME || 'samplebot');
+            script.setAttribute('data-size', 'large');
+            script.setAttribute('data-onauth', 'TelegramLoginWidget.dataOnauth(user)');
+            script.setAttribute('data-request-access', 'write');
+            script.async = true;
+            
+            if (containerRef.current) {
+              containerRef.current.innerHTML = '';
+              containerRef.current.appendChild(script);
+            }
         }
     }
   }, [location, navigate, setToken, setUser]);
