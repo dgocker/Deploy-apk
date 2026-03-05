@@ -37,36 +37,6 @@ function verifyTelegramWebApp(initData: string, botToken: string) {
   return calculatedHash === hash;
 }
 
-router.post('/telegram-webapp', async (req, res) => {
-  try {
-    const { initData, inviteCode } = req.body;
-
-    if (!TELEGRAM_BOT_TOKEN) {
-      // Dev bypass
-      if (process.env.NODE_ENV !== 'production') {
-        // Mock user for dev
-        const user = { id: 12345, first_name: 'Dev', last_name: 'User', username: 'devuser', photo_url: '' };
-        return await handleUserLogin(user, inviteCode, res);
-      }
-      return res.status(500).json({ error: 'Bot token not configured' });
-    }
-
-    const isValid = verifyTelegramWebApp(initData, TELEGRAM_BOT_TOKEN);
-    
-    if (!isValid) {
-      return res.status(401).json({ error: 'Invalid Telegram WebApp authentication' });
-    }
-
-    const urlParams = new URLSearchParams(initData);
-    const userData = JSON.parse(urlParams.get('user') || '{}');
-    
-    await handleUserLogin(userData, inviteCode, res);
-  } catch (error) {
-    console.error('Error in /telegram-webapp:', error);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 async function sendWelcomeMessage(telegramId: number | string) {
   if (!TELEGRAM_BOT_TOKEN) return;
   // Skip if not a Telegram ID
@@ -91,42 +61,6 @@ async function sendWelcomeMessage(telegramId: number | string) {
     console.error('Error sending welcome message:', error);
   }
 }
-
-router.post('/google', async (req, res) => {
-  try {
-    const { idToken, inviteCode } = req.body;
-    
-    // Verify token
-    const ticket = await googleClient.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID, // Optional check
-    });
-    const payload = ticket.getPayload();
-    
-    if (!payload) {
-        return res.status(401).json({ error: 'Invalid Google token' });
-    }
-    
-    const googleId = payload.sub;
-    const email = payload.email;
-    const name = payload.name;
-    const picture = payload.picture;
-    
-    const authData = {
-        id: `google:${googleId}`,
-        first_name: payload.given_name || name || 'Google User',
-        last_name: payload.family_name || '',
-        username: email ? email.split('@')[0] : `user_${googleId.substring(0,8)}`,
-        photo_url: picture
-    };
-    
-    await handleUserLogin(authData, inviteCode, res);
-    
-  } catch (error) {
-    console.error('Error in /google:', error);
-    res.status(401).json({ error: 'Google authentication failed' });
-  }
-});
 
 async function handleUserLogin(authData: any, inviteCode: string, res: any) {
   const { id: telegram_id, first_name, last_name, username, photo_url } = authData;
@@ -194,6 +128,72 @@ async function handleUserLogin(authData: any, inviteCode: string, res: any) {
   res.json({ token, user });
 }
 
+router.post('/telegram-webapp', async (req, res) => {
+  try {
+    const { initData, inviteCode } = req.body;
+
+    if (!TELEGRAM_BOT_TOKEN) {
+      // Dev bypass
+      if (process.env.NODE_ENV !== 'production') {
+        // Mock user for dev
+        const user = { id: 12345, first_name: 'Dev', last_name: 'User', username: 'devuser', photo_url: '' };
+        return await handleUserLogin(user, inviteCode, res);
+      }
+      return res.status(500).json({ error: 'Bot token not configured' });
+    }
+
+    const isValid = verifyTelegramWebApp(initData, TELEGRAM_BOT_TOKEN);
+    
+    if (!isValid) {
+      return res.status(401).json({ error: 'Invalid Telegram WebApp authentication' });
+    }
+
+    const urlParams = new URLSearchParams(initData);
+    const userData = JSON.parse(urlParams.get('user') || '{}');
+    
+    await handleUserLogin(userData, inviteCode, res);
+  } catch (error) {
+    console.error('Error in /telegram-webapp:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+router.post('/google', async (req, res) => {
+  try {
+    const { idToken, inviteCode } = req.body;
+    
+    // Verify token
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID, // Optional check
+    });
+    const payload = ticket.getPayload();
+    
+    if (!payload) {
+        return res.status(401).json({ error: 'Invalid Google token' });
+    }
+    
+    const googleId = payload.sub;
+    const email = payload.email;
+    const name = payload.name;
+    const picture = payload.picture;
+    
+    const authData = {
+        id: `google:${googleId}`,
+        first_name: payload.given_name || name || 'Google User',
+        last_name: payload.family_name || '',
+        username: email ? email.split('@')[0] : `user_${googleId.substring(0,8)}`,
+        photo_url: picture
+    };
+    
+    await handleUserLogin(authData, inviteCode, res);
+    
+  } catch (error) {
+    console.error('Error in /google:', error);
+    res.status(401).json({ error: 'Google authentication failed' });
+  }
+});
+
 router.post('/telegram', async (req, res) => {
   try {
     const { authData, inviteCode } = req.body;
@@ -219,12 +219,6 @@ router.post('/telegram', async (req, res) => {
 
 router.get('/me', authenticateToken, (req: AuthRequest, res) => {
   res.json({ user: req.user });
-});
-
-export default router;
-
-    res.status(500).json({ error: 'Internal server error' });
-  }
 });
 
 export default router;
