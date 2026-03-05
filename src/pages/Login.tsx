@@ -215,12 +215,14 @@ export default function Login() {
   const handleMobileLogin = () => {
       const botName = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'samplebot';
       // Open bot with start parameter to trigger auth flow
-      // In a real app, you'd implement a deep link handler or polling mechanism
-      // For now, we'll open the bot which is better than nothing
       window.open(`https://t.me/${botName}?start=auth`, '_system');
   };
   
-  const isCapacitor = window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && navigator.userAgent.includes('Android'));
+  // Improved check for mobile environment
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+  const isCapacitor = window.location.protocol === 'capacitor:' || 
+                      window.location.protocol === 'file:' || 
+                      (window.location.hostname === 'localhost' && isMobile);
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-zinc-950">
@@ -256,4 +258,3 @@ export default function Login() {
     </div>
   );
 }
-
