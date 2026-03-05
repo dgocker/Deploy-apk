@@ -1,12 +1,14 @@
 import express from 'express';
 import crypto from 'crypto';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import { db } from '../db.js';
 import { authenticateToken, AuthRequest } from '../authMiddleware.js';
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 const TELEGRAM_BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+const googleClient = new OAuth2Client();
 
 function verifyTelegramAuth(data: any, botToken: string) {
   const secret = crypto.createHash('sha256').update(botToken).digest();
@@ -65,8 +67,11 @@ router.post('/telegram-webapp', async (req, res) => {
   }
 });
 
-async function sendWelcomeMessage(telegramId: number) {
+async function sendWelcomeMessage(telegramId: number | string) {
   if (!TELEGRAM_BOT_TOKEN) return;
+  // Skip if not a Telegram ID
+  if (typeof telegramId === 'string' && telegramId.startsWith('google:')) return;
+
   try {
     const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage`, {
       method: 'POST',
@@ -86,6 +91,42 @@ async function sendWelcomeMessage(telegramId: number) {
     console.error('Error sending welcome message:', error);
   }
 }
+
+router.post('/google', async (req, res) => {
+  try {
+    const { idToken, inviteCode } = req.body;
+    
+    // Verify token
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID, // Optional check
+    });
+    const payload = ticket.getPayload();
+    
+    if (!payload) {
+        return res.status(401).json({ error: 'Invalid Google token' });
+    }
+    
+    const googleId = payload.sub;
+    const email = payload.email;
+    const name = payload.name;
+    const picture = payload.picture;
+    
+    const authData = {
+        id: `google:${googleId}`,
+        first_name: payload.given_name || name || 'Google User',
+        last_name: payload.family_name || '',
+        username: email ? email.split('@')[0] : `user_${googleId.substring(0,8)}`,
+        photo_url: picture
+    };
+    
+    await handleUserLogin(authData, inviteCode, res);
+    
+  } catch (error) {
+    console.error('Error in /google:', error);
+    res.status(401).json({ error: 'Google authentication failed' });
+  }
+});
 
 async function handleUserLogin(authData: any, inviteCode: string, res: any) {
   const { id: telegram_id, first_name, last_name, username, photo_url } = authData;
@@ -180,17 +221,8 @@ router.get('/me', authenticateToken, (req: AuthRequest, res) => {
   res.json({ user: req.user });
 });
 
-router.post('/fcm-token', authenticateToken, async (req: AuthRequest, res) => {
-  const { token } = req.body;
-  if (!token) {
-    return res.status(400).json({ error: 'Token is required' });
-  }
+export default router;
 
-  try {
-    await db.prepare('UPDATE users SET fcm_token = ? WHERE id = ?').run(token, req.user!.id);
-    res.json({ success: true });
-  } catch (error) {
-    console.error('Error updating FCM token:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
