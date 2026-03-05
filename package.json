@@ -12,9 +12,10 @@
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@capacitor-firebase/authentication": "^8.1.0",
     "@capacitor/android": "^8.1.0",
     "@capacitor/core": "^8.1.0",
-    "@capacitor/push-notifications": "^8.0.1",
+    "@capacitor/push-notifications": "latest",
     "@google/genai": "^1.29.0",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
@@ -23,6 +24,7 @@
     "dotenv": "^17.3.1",
     "express": "^4.22.1",
     "framer-motion": "^12.34.5",
+    "google-auth-library": "^10.6.1",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^0.546.0",
     "motion": "^12.23.24",
