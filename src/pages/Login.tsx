@@ -230,7 +230,12 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
-      const user = await GoogleAuth.signIn();
+      const result = await FirebaseAuthentication.signInWithGoogle();
+      const idToken = result.credential?.idToken;
+
+      if (!idToken) {
+        throw new Error('Не удалось получить ID Token от Google');
+      }
       
       // Get invite code (priority: localStorage -> manual input)
       let activeInviteCode = localStorage.getItem('pending_invite_code') || inviteInput;
@@ -242,7 +247,7 @@ export default function Login() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          idToken: user.authentication.idToken, 
+          idToken: idToken, 
           inviteCode: activeInviteCode 
         })
       });
