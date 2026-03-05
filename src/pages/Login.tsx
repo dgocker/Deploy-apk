@@ -148,9 +148,7 @@ export default function Login() {
 
     // 3. Check for Telegram Web App (Mini App) context
     const tg = (window as any).Telegram?.WebApp;
-    // Check if running in Capacitor (mobile app)
-    const isCapacitor = window.location.protocol === 'capacitor:' || window.location.protocol === 'http:' && window.location.hostname === 'localhost' && navigator.userAgent.includes('Android');
-
+    
     if (tg && tg.initData) {
       // ... (existing Web App logic)
       tg.ready();
