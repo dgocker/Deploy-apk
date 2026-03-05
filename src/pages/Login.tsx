@@ -80,7 +80,8 @@ export default function Login() {
         }
 
         try {
-          const response = await fetch('/api/auth/telegram', {
+          const apiUrl = import.meta.env.VITE_API_URL || '';
+          const response = await fetch(`${apiUrl}/api/auth/telegram`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ authData: user, inviteCode: activeInviteCode })
@@ -125,7 +126,11 @@ export default function Login() {
 
     // 3. Check for Telegram Web App (Mini App) context
     const tg = (window as any).Telegram?.WebApp;
+    // Check if running in Capacitor (mobile app)
+    const isCapacitor = window.location.protocol === 'capacitor:' || window.location.protocol === 'http:' && window.location.hostname === 'localhost' && navigator.userAgent.includes('Android');
+
     if (tg && tg.initData) {
+      // ... (existing Web App logic)
       tg.ready();
       
       // Check for invite code in start_param
@@ -147,7 +152,8 @@ export default function Login() {
       }
 
       // Auto-login
-      fetch('/api/auth/telegram-webapp', {
+      const apiUrl = import.meta.env.VITE_API_URL || '';
+      fetch(`${apiUrl}/api/auth/telegram-webapp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ initData: tg.initData, inviteCode: activeInviteCode })
@@ -187,22 +193,34 @@ export default function Login() {
         }
       })
       .catch(err => console.error('Web App Login Failed:', err));
-    }
-
-    const script = document.createElement('script');
-    script.src = 'https://telegram.org/js/telegram-widget.js?22';
-    // Replace with your actual bot username in production
-    script.setAttribute('data-telegram-login', import.meta.env.VITE_TELEGRAM_BOT_NAME || 'samplebot');
-    script.setAttribute('data-size', 'large');
-    script.setAttribute('data-onauth', 'TelegramLoginWidget.dataOnauth(user)');
-    script.setAttribute('data-request-access', 'write');
-    script.async = true;
-    
-    if (containerRef.current) {
-      containerRef.current.innerHTML = '';
-      containerRef.current.appendChild(script);
+    } else if (!isCapacitor) {
+        // Only inject widget if NOT in Capacitor/Mobile App
+        const script = document.createElement('script');
+        script.src = 'https://telegram.org/js/telegram-widget.js?22';
+        // Replace with your actual bot username in production
+        script.setAttribute('data-telegram-login', import.meta.env.VITE_TELEGRAM_BOT_NAME || 'samplebot');
+        script.setAttribute('data-size', 'large');
+        script.setAttribute('data-onauth', 'TelegramLoginWidget.dataOnauth(user)');
+        script.setAttribute('data-request-access', 'write');
+        script.async = true;
+        
+        if (containerRef.current) {
+          containerRef.current.innerHTML = '';
+          containerRef.current.appendChild(script);
+        }
     }
   }, [location, navigate, setToken, setUser]);
+
+  // Handle mobile login button click
+  const handleMobileLogin = () => {
+      const botName = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'samplebot';
+      // Open bot with start parameter to trigger auth flow
+      // In a real app, you'd implement a deep link handler or polling mechanism
+      // For now, we'll open the bot which is better than nothing
+      window.open(`https://t.me/${botName}?start=auth`, '_system');
+  };
+  
+  const isCapacitor = window.location.protocol === 'capacitor:' || (window.location.hostname === 'localhost' && navigator.userAgent.includes('Android'));
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-zinc-950">
@@ -222,7 +240,17 @@ export default function Login() {
         )}
         
         <div ref={containerRef} className="flex justify-center min-h-[40px]">
-          {/* Telegram widget will be injected here */}
+          {isCapacitor && (
+              <button 
+                  onClick={handleMobileLogin}
+                  className="bg-[#54a9eb] hover:bg-[#4095d6] text-white font-medium py-2.5 px-6 rounded-full flex items-center gap-2 transition-colors w-full justify-center"
+              >
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M20.665 3.41702L2.88502 10.274C1.67102 10.76 1.67602 11.437 2.66002 11.739L7.22402 13.162L17.78 6.50202C18.279 6.19902 18.735 6.36502 18.361 6.69702L9.81002 14.413H9.80802L9.81002 14.414L9.49502 19.102C9.95602 19.102 10.159 18.89 10.418 18.64L12.634 16.485L17.243 19.889C18.093 20.358 18.704 20.117 18.916 19.102L21.943 4.86502C22.253 3.62302 21.472 3.05902 20.665 3.41702Z" fill="currentColor"/>
+                  </svg>
+                  Войти через Telegram
+              </button>
+          )}
         </div>
       </motion.div>
     </div>
