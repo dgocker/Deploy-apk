@@ -342,7 +342,7 @@ export default function Login() {
           </div>
         )}
         
-        <div ref={containerRef} className="flex flex-col gap-3 justify-center min-h-[40px]">
+        <div className="flex flex-col gap-3 justify-center min-h-[40px]">
           <button 
               onClick={handleGoogleLogin}
               className="bg-white hover:bg-gray-100 text-gray-800 font-medium py-2.5 px-6 rounded-full flex items-center gap-2 transition-colors w-full justify-center shadow-sm"
@@ -375,9 +375,16 @@ export default function Login() {
               </button>
             </>
           ) : (
-            <div className="mt-2 flex justify-center min-h-[40px]" id="telegram-widget-container">
-               {/* Widget will be injected here by useEffect */}
-            </div>
+            <>
+              <div className="relative flex py-1 items-center">
+                  <div className="flex-grow border-t border-zinc-700"></div>
+                  <span className="flex-shrink mx-4 text-zinc-500 text-xs">ИЛИ</span>
+                  <div className="flex-grow border-t border-zinc-700"></div>
+              </div>
+              <div ref={containerRef} className="mt-2 flex justify-center min-h-[40px]" id="telegram-widget-container">
+                 {/* Widget will be injected here by useEffect */}
+              </div>
+            </>
           )}
         </div>
       </motion.div>
