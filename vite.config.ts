@@ -9,4 +9,15 @@ export default defineConfig({
     host: '0.0.0.0',
     port: 3000,
   },
+  build: {
+    rollupOptions: {
+      external: [
+        'firebase/app',
+        'firebase/auth',
+      ],
+    },
+  },
+  optimizeDeps: {
+    exclude: ['firebase/app', 'firebase/auth'],
+  },
 });
