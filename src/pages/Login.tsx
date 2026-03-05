@@ -2,9 +2,17 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { registerPlugin } from '@capacitor/core';
 
-// Dynamic import helper
-let GoogleAuth: any = null;
+// Define interface for the plugin
+interface GoogleAuthPlugin {
+  signIn(): Promise<any>;
+  initialize(options?: any): Promise<void>;
+  signOut(): Promise<any>;
+}
+
+// Access the plugin via Capacitor core to avoid build issues with the package
+const GoogleAuth = registerPlugin<GoogleAuthPlugin>('GoogleAuth');
 
 declare global {
   interface Window {
@@ -23,15 +31,16 @@ export default function Login() {
   const [hasInvite, setHasInvite] = useState(false);
 
   useEffect(() => {
-    // Initialize Google Auth dynamically
-    import('@codetrix-studio/capacitor-google-auth').then(module => {
-      GoogleAuth = module.GoogleAuth;
-      GoogleAuth.initialize({
-        grantOfflineAccess: true,
-      });
-    }).catch(err => {
-      console.error('Failed to load Google Auth module', err);
-    });
+    // Initialize Google Auth only if in Capacitor environment to avoid web errors
+    const isCapacitor = window.location.protocol === 'capacitor:' || 
+                        window.location.protocol === 'file:' || 
+                        (window.location.hostname === 'localhost' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent));
+    
+    if (isCapacitor) {
+       GoogleAuth.initialize({
+         grantOfflineAccess: true,
+       }).catch(e => console.error('Failed to initialize Google Auth', e));
+    }
 
     // 1. Immediately save invite code from URL to localStorage if present
     const searchParams = new URLSearchParams(location.search);
@@ -233,13 +242,6 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
-      if (!GoogleAuth) {
-        // Try to load again if not loaded
-        const module = await import('@codetrix-studio/capacitor-google-auth');
-        GoogleAuth = module.GoogleAuth;
-        await GoogleAuth.initialize({ grantOfflineAccess: true });
-      }
-      
       const user = await GoogleAuth.signIn();
       
       // Get invite code
