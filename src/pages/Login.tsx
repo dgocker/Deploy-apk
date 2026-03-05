@@ -2,7 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { useStore } from '../store/useStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+
+// Dynamic import helper
+let GoogleAuth: any = null;
 
 declare global {
   interface Window {
@@ -21,9 +23,14 @@ export default function Login() {
   const [hasInvite, setHasInvite] = useState(false);
 
   useEffect(() => {
-    // Initialize Google Auth
-    GoogleAuth.initialize({
-      grantOfflineAccess: true,
+    // Initialize Google Auth dynamically
+    import('@codetrix-studio/capacitor-google-auth').then(module => {
+      GoogleAuth = module.GoogleAuth;
+      GoogleAuth.initialize({
+        grantOfflineAccess: true,
+      });
+    }).catch(err => {
+      console.error('Failed to load Google Auth module', err);
     });
 
     // 1. Immediately save invite code from URL to localStorage if present
@@ -226,6 +233,13 @@ export default function Login() {
 
   const handleGoogleLogin = async () => {
     try {
+      if (!GoogleAuth) {
+        // Try to load again if not loaded
+        const module = await import('@codetrix-studio/capacitor-google-auth');
+        GoogleAuth = module.GoogleAuth;
+        await GoogleAuth.initialize({ grantOfflineAccess: true });
+      }
+      
       const user = await GoogleAuth.signIn();
       
       // Get invite code
