@@ -3,7 +3,6 @@ import { useStore } from '../store/useStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
-import { initializeApp, getApps } from 'firebase/app';
 
 // Initialize Firebase for Web if config is present
 const firebaseConfig = {
@@ -15,8 +14,16 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-if (firebaseConfig.apiKey && getApps().length === 0) {
-  initializeApp(firebaseConfig);
+// Dynamic initialization for web
+if (firebaseConfig.apiKey && typeof window !== 'undefined') {
+  const isCapacitor = window.location.protocol === 'capacitor:' || window.location.protocol === 'file:';
+  if (!isCapacitor) {
+    import('firebase/app').then(({ initializeApp, getApps }) => {
+      if (getApps().length === 0) {
+        initializeApp(firebaseConfig);
+      }
+    }).catch(err => console.error('Failed to initialize Firebase Web SDK:', err));
+  }
 }
 
 // ... (remove old GoogleAuth interface and registerPlugin)
