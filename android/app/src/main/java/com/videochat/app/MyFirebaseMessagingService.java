@@ -18,13 +18,21 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
             Log.d("MyFirebaseMsgService", "Message data payload: " + remoteMessage.getData());
 
             if (remoteMessage.getData().containsKey("type") && "incoming_call".equals(remoteMessage.getData().get("type"))) {
-                Intent serviceIntent = new Intent(this, CallForegroundService.class);
                 String callerName = remoteMessage.getData().get("callerName");
                 if (callerName == null) {
                     callerName = remoteMessage.getData().get("name");
                 }
+
+                // Start Foreground Service
+                Intent serviceIntent = new Intent(this, CallForegroundService.class);
                 serviceIntent.putExtra("callerName", callerName);
                 ContextCompat.startForegroundService(this, serviceIntent);
+
+                // Launch IncomingCallActivity
+                Intent activityIntent = new Intent(this, IncomingCallActivity.class);
+                activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                activityIntent.putExtra("callerName", callerName);
+                startActivity(activityIntent);
             }
         }
     }
