@@ -559,21 +559,21 @@ export default function Dashboard() {
         name: user?.first_name
       });
 
-      // Set timeout for connection (ACK) - 5 seconds
+      // Set timeout for connection (ACK) - 10 seconds (increased to allow push delivery)
       if (connectionTimeoutRef.current) clearTimeout(connectionTimeoutRef.current);
       connectionTimeoutRef.current = setTimeout(() => {
         alert('Не удалось установить соединение');
         handleCallEnded();
-      }, 5000);
+      }, 10000);
 
-      // Set timeout for call answering - 30 seconds
+      // Set timeout for call answering - 45 seconds (matches server timeout)
       if (dialingTimeoutRef.current) clearTimeout(dialingTimeoutRef.current);
       dialingTimeoutRef.current = setTimeout(() => {
         if (callActiveRef.current && !activeCallSocketIdRef.current) {
           alert('Абонент не отвечает');
           endCall();
         }
-      }, 30000); // 30 seconds timeout
+      }, 45000); // 45 seconds timeout
     } catch (err) {
       console.error('Failed to get media devices', err);
       alert('Не удалось получить доступ к камере или микрофону');
@@ -808,9 +808,9 @@ export default function Dashboard() {
                   <div className="flex items-center gap-2">
                     <button 
                       onClick={() => startCall(friend.id)}
-                      disabled={!isOnline || callActive}
+                      disabled={callActive}
                       className={`p-3 rounded-full transition-colors ${
-                        isOnline && !callActive 
+                        !callActive 
                           ? 'bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20' 
                           : 'bg-zinc-800 text-zinc-500 cursor-not-allowed'
                       }`}
