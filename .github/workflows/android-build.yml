@@ -35,11 +35,24 @@ jobs:
 
       - name: Add Android platform
         run: |
-          if [ ! -d "android" ]; then
+          if [ ! -f "android/gradlew" ]; then
+            echo "Android project is incomplete or missing gradlew. Regenerating..."
+            rm -rf android
             npx cap add android
           else
+            echo "Android project exists and looks healthy."
             npx cap sync android
           fi
+
+      - name: Patch build.gradle with Signing Config
+        run: |
+          # Inject signingConfigs and debug buildType configuration
+          # This ensures that even if the android folder is regenerated, the config is applied.
+          SED_SCRIPT='/defaultConfig {/a \        signingConfigs {\n            debug {\n                storeFile file("debug.keystore")\n                storePassword "android"\n                keyAlias "androiddebugkey"\n                keyPassword "android"\n            }\n        }'
+          sed -i "$SED_SCRIPT" android/app/build.gradle
+          
+          # Ensure debug buildType uses the signing config
+          sed -i 's/buildTypes {/buildTypes {\n        debug {\n            signingConfig signingConfigs.debug\n        }/' android/app/build.gradle
 
       - name: Setup Persistent Debug Keystore
         env:
