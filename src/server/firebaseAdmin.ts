@@ -69,8 +69,9 @@ export async function sendPushNotification(fcmToken: string, title: string, body
 
     // Special handling for incoming calls (VoIP)
     if (data && data.type === 'incoming_call') {
-      // For calls, we use data-only notification with high priority and fullScreenIntent
-      // We DO NOT set the notification field to avoid default system notification
+      // For calls, we use data-only notification with high priority
+      // We DO NOT set the notification field or android.notification field
+      // This ensures onMessageReceived is called even in background
       message.data = {
         ...data,
         // Ensure all values are strings
@@ -81,17 +82,14 @@ export async function sendPushNotification(fcmToken: string, title: string, body
         )
       };
       
-      message.android.notification = {
-        title: title,
-        body: body,
-        channelId: 'call_channel', // Must match the channel created in the app
-        fullScreenIntent: true,
+      // Set high priority for data message
+      message.android = {
         priority: 'high',
-        defaultSound: true,
-        defaultVibrateTimings: true,
-        visibility: 'public',
-        category: 'call', // Add category call
+        ttl: 0, // Deliver immediately or drop
       };
+      
+      // Remove apns payload for Android if strictly targeting Android, 
+      // but we might need it for iOS later. For now, keep it simple.
     } else {
       // Standard notification
       message.notification = {
