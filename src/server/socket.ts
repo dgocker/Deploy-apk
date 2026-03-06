@@ -1,5 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { db } from './db.js';
 import { sendPushNotification } from './firebaseAdmin.js';
 
@@ -105,11 +106,19 @@ export function setupSocket(io: Server) {
       try {
         const targetUser = await db.prepare('SELECT fcm_token FROM users WHERE id = ?').get(userToCall) as any;
         if (targetUser && targetUser.fcm_token) {
+          const callId = crypto.randomUUID();
           await sendPushNotification(
             targetUser.fcm_token,
             'Входящий звонок',
             `Вам звонит ${name}`,
-            { type: 'incoming_call', from: String(from), name, fromSocketId: socket.id }
+            { 
+              type: 'incoming_call', 
+              callId,
+              callerId: String(from), 
+              callerName: name,
+              fromSocketId: socket.id,
+              isVideo: 'true'
+            }
           );
         }
       } catch (error) {
