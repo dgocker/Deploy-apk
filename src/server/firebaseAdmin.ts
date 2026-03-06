@@ -88,6 +88,7 @@ export async function sendPushNotification(fcmToken: string, title: string, body
         defaultSound: true,
         defaultVibrateTimings: true,
         visibility: 'public',
+        category: 'call', // Add category call
       };
     } else {
       // Standard notification
