@@ -33,7 +33,8 @@ export default function Dashboard() {
 
   // Ringtone logic
   const ringtoneRef = useRef<HTMLAudioElement | null>(null);
-  const dialingToneRef = useRef<HTMLAudioElement | null>(null);
+  const ringbackIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     // Create audio element for incoming ringtone
@@ -41,17 +42,70 @@ export default function Dashboard() {
     ringtone.loop = true;
     ringtoneRef.current = ringtone;
 
-    // Create audio element for outgoing dialing tone
-    const dialingTone = new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-    dialingTone.loop = true;
-    dialingToneRef.current = dialingTone;
-
     return () => {
       ringtone.pause();
       ringtone.src = '';
-      dialingTone.pause();
-      dialingTone.src = '';
+      if (ringbackIntervalRef.current) {
+        clearInterval(ringbackIntervalRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+      }
     };
+  }, []);
+
+  const startRingback = useCallback(() => {
+    if (ringbackIntervalRef.current) return;
+
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioContextRef.current = ctx;
+
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
+
+      const playBeep = () => {
+        if (ctx.state === 'closed') return;
+        
+        const osc1 = ctx.createOscillator();
+        const osc2 = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc1.connect(gain);
+        osc2.connect(gain);
+        gain.connect(ctx.destination);
+
+        // Standard US ringback tone frequencies (440Hz + 480Hz)
+        osc1.frequency.value = 440;
+        osc2.frequency.value = 480;
+        gain.gain.value = 0.1; // Low volume
+
+        osc1.start();
+        osc2.start();
+        
+        const duration = 2; // 2 seconds on
+        osc1.stop(ctx.currentTime + duration);
+        osc2.stop(ctx.currentTime + duration);
+      };
+
+      playBeep();
+      // 2s on, 4s off cycle (approx)
+      ringbackIntervalRef.current = setInterval(playBeep, 6000);
+    } catch (e) {
+      console.error('Failed to start ringback tone:', e);
+    }
+  }, []);
+
+  const stopRingback = useCallback(() => {
+    if (ringbackIntervalRef.current) {
+      clearInterval(ringbackIntervalRef.current);
+      ringbackIntervalRef.current = null;
+    }
+    if (audioContextRef.current) {
+      audioContextRef.current.close().catch(console.error);
+      audioContextRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
@@ -70,15 +124,11 @@ export default function Dashboard() {
   useEffect(() => {
     // Play dialing tone when we are calling someone and waiting for them to answer
     if (callActive && activeCallUserId && !activeCallSocketId) {
-      dialingToneRef.current?.play().catch(e => console.log('Audio autoplay blocked:', e));
+      startRingback();
     } else {
-      // Stop dialing tone when call is answered or ended
-      if (dialingToneRef.current) {
-        dialingToneRef.current.pause();
-        dialingToneRef.current.currentTime = 0;
-      }
+      stopRingback();
     }
-  }, [callActive, activeCallUserId, activeCallSocketId]);
+  }, [callActive, activeCallUserId, activeCallSocketId, startRingback, stopRingback]);
 
   // Handle pending call from push notification
   useEffect(() => {
