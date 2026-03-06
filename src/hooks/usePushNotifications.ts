@@ -44,6 +44,8 @@ export function usePushNotifications() {
               vibration: true,
               lights: true,
               lightColor: '#10B981', // Emerald 500
+              // @ts-ignore
+              category: 'call'
             });
             console.log('Channel "call_channel" created successfully');
           }
