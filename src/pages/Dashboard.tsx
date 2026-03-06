@@ -831,6 +831,33 @@ export default function Dashboard() {
                   
                   <div className="flex items-center gap-2">
                     <button 
+                      onClick={async () => {
+                        try {
+                          const apiUrl = getApiUrl();
+                          const res = await fetch(`${apiUrl}/api/auth/test-push`, {
+                            method: 'POST',
+                            headers: { 
+                              'Authorization': `Bearer ${token}`,
+                              'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ targetUserId: friend.id })
+                          });
+                          const data = await res.json();
+                          if (data.success) {
+                            alert(`Тестовый пуш отправлен другу ${friend.first_name}!`);
+                          } else {
+                            alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                          }
+                        } catch (e) {
+                          alert('Ошибка сети');
+                        }
+                      }}
+                      className="p-3 rounded-full bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-colors"
+                      title="Тест Пуш"
+                    >
+                      🔔
+                    </button>
+                    <button 
                       onClick={() => startCall(friend.id)}
                       disabled={callActive}
                       className={`p-3 rounded-full transition-colors ${
