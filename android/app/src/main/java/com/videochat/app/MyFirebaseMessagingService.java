@@ -3,8 +3,12 @@ package com.videochat.app;
 import com.google.firebase.messaging.FirebaseMessagingService;
 import com.google.firebase.messaging.RemoteMessage;
 import android.content.Intent;
-import androidx.core.content.ContextCompat;
 import android.util.Log;
+import android.telecom.TelecomManager;
+import android.telecom.PhoneAccountHandle;
+import android.content.ComponentName;
+import android.os.Bundle;
+import android.content.Context;
 
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
@@ -24,16 +28,16 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                     callerName = remoteMessage.getData().get("name");
                 }
 
-                // Start Foreground Service
-                Intent serviceIntent = new Intent(this, CallForegroundService.class);
-                serviceIntent.putExtra("callerName", callerName);
-                ContextCompat.startForegroundService(this, serviceIntent);
+                TelecomManager tm = (TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+                PhoneAccountHandle handle = new PhoneAccountHandle(
+                    new ComponentName(this, MyConnectionService.class),
+                    "videochat_account"
+                );
 
-                // Launch IncomingCallActivity
-                Intent activityIntent = new Intent(this, IncomingCallActivity.class);
-                activityIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-                activityIntent.putExtra("callerName", callerName);
-                startActivity(activityIntent);
+                Bundle extras = new Bundle();
+                extras.putString("callerName", callerName);
+
+                tm.addNewIncomingCall(handle, extras);
             }
         }
     }

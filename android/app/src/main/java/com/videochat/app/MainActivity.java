@@ -39,5 +39,20 @@ public class MainActivity extends BridgeActivity {
             intent.setData(Uri.parse("package:" + getPackageName()));
             startActivity(intent);
         }
+
+        // Register PhoneAccount for Telecom API
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            android.telecom.TelecomManager telecomManager = (android.telecom.TelecomManager) getSystemService(Context.TELECOM_SERVICE);
+            android.telecom.PhoneAccountHandle handle = new android.telecom.PhoneAccountHandle(
+                    new android.content.ComponentName(this, MyConnectionService.class),
+                    "videochat_account"
+            );
+
+            android.telecom.PhoneAccount phoneAccount = android.telecom.PhoneAccount.builder(handle, "VideoChat Calls")
+                    .setCapabilities(android.telecom.PhoneAccount.CAPABILITY_CALL_PROVIDER)
+                    .build();
+
+            telecomManager.registerPhoneAccount(phoneAccount);
+        }
     }
 }
