@@ -106,9 +106,21 @@ export function usePushNotifications() {
         console.log('Incoming call push received, storing in pendingCall');
         useStore.getState().setPendingCall(notification.data);
 
-        // Start Foreground Service on Android
-        if (Capacitor.getPlatform() === 'android') {
-            try {
+        // Use CallKitVoip for BOTH iOS and Android
+        // This provides native calling UI (ConnectionService on Android)
+        try {
+          await (CallKitVoip as any).reportNewIncomingCall({
+            callId: notification.data.callId || generateUUID(),
+            callerName: notification.data.callerName || notification.data.name || 'Unknown',
+            handle: notification.data.callerId || notification.data.from || 'Unknown',
+            hasVideo: notification.data.isVideo === 'true' || notification.data.isVideo === true
+          });
+        } catch (e) {
+          console.error('Error reporting incoming call to CallKit:', e);
+          
+          // Fallback to Foreground Service ONLY if CallKit fails (e.g. permission issue)
+          if (Capacitor.getPlatform() === 'android') {
+             try {
                 await ForegroundService.startForegroundService({
                     id: 1001,
                     title: 'Входящий звонок',
@@ -120,26 +132,15 @@ export function usePushNotifications() {
                     ],
                     notificationChannelId: 'call_channel'
                 });
-            } catch (e) {
-                console.error('Failed to start foreground service:', e);
+            } catch (fsError) {
+                console.error('Fallback Foreground Service failed:', fsError);
             }
-        } else {
-            // iOS fallback to CallKit
-            try {
-              await (CallKitVoip as any).reportNewIncomingCall({
-                callId: notification.data.callId || generateUUID(),
-                callerName: notification.data.callerName || notification.data.name || 'Unknown',
-                handle: notification.data.callerId || notification.data.from || 'Unknown',
-                hasVideo: notification.data.isVideo === 'true' || notification.data.isVideo === true
-              });
-            } catch (e) {
-              console.error('Error reporting incoming call to CallKit:', e);
-            }
+          }
         }
       }
     });
 
-    // Listen for foreground service button clicks
+    // Listen for foreground service button clicks (Fallback)
     const foregroundButtonListener = ForegroundService.addListener('buttonClicked', async (event) => {
         if (event.buttonId === 2) { // Reject
             await ForegroundService.stopForegroundService();
