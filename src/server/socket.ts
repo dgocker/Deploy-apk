@@ -75,6 +75,7 @@ export function setupSocket(io: Server) {
 
     // WebRTC Signaling
     socket.on('call_user', async (data) => {
+      console.log('Received call_user event:', data);
       const { userToCall, from, name } = data;
       const targetSockets = onlineUsers.get(userToCall);
       
@@ -105,8 +106,10 @@ export function setupSocket(io: Server) {
       // Always try to send a push notification to wake up the app
       try {
         const targetUser = await db.prepare('SELECT fcm_token FROM users WHERE id = ?').get(userToCall) as any;
+        console.log('Target user for push:', targetUser);
         if (targetUser && targetUser.fcm_token) {
           const callId = crypto.randomUUID();
+          console.log('Sending push notification to:', targetUser.fcm_token);
           await sendPushNotification(
             targetUser.fcm_token,
             'Входящий звонок',
@@ -120,6 +123,8 @@ export function setupSocket(io: Server) {
               isVideo: 'true'
             }
           );
+        } else {
+          console.log('No FCM token found for user:', userToCall);
         }
       } catch (error) {
         console.error('Error sending push notification for call:', error);
