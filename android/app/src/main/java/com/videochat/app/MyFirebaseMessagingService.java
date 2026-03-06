@@ -11,6 +11,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     public void onMessageReceived(RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
         
+        Log.e("CALL_TEST", "CALL PUSH RECEIVED");
         Log.d("MyFirebaseMsgService", "From: " + remoteMessage.getFrom());
 
         // Check if message contains a data payload.
