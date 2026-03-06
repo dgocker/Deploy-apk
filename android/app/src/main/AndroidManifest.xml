@@ -54,13 +54,14 @@
             android:foregroundServiceType="phoneCall" />
 
         <service
-            android:name="io.capawesome.capacitorjs.plugins.foregroundservice.AndroidForegroundService"
+            android:name=".CallForegroundService"
             android:foregroundServiceType="phoneCall"
             android:exported="false" />
 
         <service
             android:name=".MyFirebaseMessagingService"
-            android:exported="false">
+            android:exported="false"
+            android:directBootAware="true">
             <intent-filter>
                 <action android:name="com.google.firebase.MESSAGING_EVENT" />
             </intent-filter>
