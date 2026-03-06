@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { io, Socket } from 'socket.io-client';
 import { Phone, PhoneOff, Video, VideoOff, Mic, MicOff, Users, LogOut, Copy, CheckCircle2, Share2, SwitchCamera, Info, X, Trash2, Settings, SignalHigh } from 'lucide-react';
 import { useWebRTC } from '../hooks/useWebRTC';
+import { getApiUrl } from '../utils/api';
 
 const EMOJIS = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🪲', '🪳', '🕷', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🪶', '🐓', '🦃', '🦤', '🦚', '🦜', '🦢', '🦩', '🕊', '🐇', '🦝', '🦨', '🦡', '🦦', '🦥', '🐁', '🐀', '🐿', '🦔'];
 
@@ -275,7 +276,8 @@ export default function Dashboard() {
     }
 
     // Fetch friends
-    fetch('/api/friends', {
+    const apiUrl = getApiUrl();
+    fetch(`${apiUrl}/api/friends`, {
       headers: { Authorization: `Bearer ${token}` }
     })
     .then(res => {
@@ -290,7 +292,8 @@ export default function Dashboard() {
     .catch(err => console.error('Failed to fetch friends', err));
 
     // Socket setup
-    const newSocket = io({
+    const socketUrl = getApiUrl() || window.location.origin;
+    const newSocket = io(socketUrl, {
       auth: { token },
       reconnectionAttempts: Infinity, // Keep trying to reconnect
       timeout: 10000,
@@ -309,7 +312,8 @@ export default function Dashboard() {
     newSocket.on('connect', () => {
       console.log('Socket connected/reconnected with ID:', newSocket.id);
       // Re-fetch friends to ensure online status is up to date
-      fetch('/api/friends', {
+      const apiUrl = getApiUrl();
+      fetch(`${apiUrl}/api/friends`, {
         headers: { Authorization: `Bearer ${token}` }
       })
       .then(res => res.json())
@@ -333,7 +337,8 @@ export default function Dashboard() {
 
       if (code) {
         try {
-          const res = await fetch('/api/friends/add', {
+          const apiUrl = getApiUrl();
+          const res = await fetch(`${apiUrl}/api/friends/add`, {
             method: 'POST',
             headers: { 
               'Content-Type': 'application/json',
@@ -485,7 +490,8 @@ export default function Dashboard() {
 
   const generateFriendLink = async () => {
     try {
-      const res = await fetch('/api/friends/links', {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/friends/links`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -681,7 +687,8 @@ export default function Dashboard() {
     if (!confirm('Вы уверены, что хотите удалить этого друга?')) return;
     
     try {
-      const res = await fetch(`/api/friends/${friendId}`, {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/friends/${friendId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
