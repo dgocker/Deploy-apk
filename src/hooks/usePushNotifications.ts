@@ -5,6 +5,17 @@ import { CallKitVoip } from '@techrover_solutions/capacitor-callkit-voip';
 import { useStore } from '../store/useStore';
 import { getApiUrl } from '../utils/api';
 
+// Simple UUID generator for browser/client side if crypto.randomUUID is not available
+const generateUUID = () => {
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
+
 export function usePushNotifications() {
   const { token } = useStore();
 
@@ -86,13 +97,25 @@ export function usePushNotifications() {
     });
 
     // Show us the notification payload if the app is open on our device
-    const pushReceivedListener = PushNotifications.addListener('pushNotificationReceived', (notification) => {
+    const pushReceivedListener = PushNotifications.addListener('pushNotificationReceived', async (notification) => {
       console.log('Push received: ' + JSON.stringify(notification));
       
       // If it's an incoming call, store it in the pendingCall state
       if (notification.data && notification.data.type === 'incoming_call') {
         console.log('Incoming call push received, storing in pendingCall');
         useStore.getState().setPendingCall(notification.data);
+
+        // Report to CallKit
+        try {
+          await (CallKitVoip as any).reportNewIncomingCall({
+            callId: notification.data.callId || generateUUID(),
+            callerName: notification.data.callerName || notification.data.name || 'Unknown',
+            handle: notification.data.callerId || notification.data.from || 'Unknown',
+            hasVideo: notification.data.isVideo === 'true' || notification.data.isVideo === true
+          });
+        } catch (e) {
+          console.error('Error reporting incoming call to CallKit:', e);
+        }
       }
     });
 
@@ -109,20 +132,35 @@ export function usePushNotifications() {
 
     // Listen for VoIP calls (CallKit)
     const callListener = (CallKitVoip as any).addListener('incomingCall', (call: any) => {
-      console.log('Incoming VoIP call received:', call);
+      console.log('Incoming VoIP call received (CallKit event):', call);
       // Trigger ringing screen
-      // The plugin should handle the native UI, but we need to update our app state
-      // to show the call screen when the user answers or opens the app
       if (call.data) {
          useStore.getState().setPendingCall(call.data);
       } else {
          // Fallback using available info
          useStore.getState().setPendingCall({
-             from: call.callerId,
+             from: call.handle || call.callerId,
              name: call.callerName || 'Unknown',
-             type: 'incoming_call'
+             type: 'incoming_call',
+             callId: call.callId
          });
       }
+    });
+
+    const answerListener = (CallKitVoip as any).addListener('answerCall', (call: any) => {
+        console.log('Call answered via CallKit UI:', call);
+        // Here we should probably navigate to the call screen or emit 'answer_call' socket event if we had access to socket
+        // Since we don't have socket here, we rely on the UI component (Dashboard) to pick up the state change
+        // or we can set a flag in the store
+        useStore.getState().setPendingCall({
+            ...useStore.getState().pendingCall,
+            answered: true
+        });
+    });
+
+    const endListener = (CallKitVoip as any).addListener('endCall', (call: any) => {
+        console.log('Call ended via CallKit UI:', call);
+        useStore.getState().setPendingCall(null);
     });
 
     return () => {
@@ -131,6 +169,8 @@ export function usePushNotifications() {
       pushReceivedListener.then(l => l.remove());
       pushActionPerformedListener.then(l => l.remove());
       callListener.then(l => l.remove());
+      answerListener.then(l => l.remove());
+      endListener.then(l => l.remove());
     };
   }, [token]);
 }
