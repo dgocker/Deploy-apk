@@ -6,6 +6,7 @@ import Dashboard from './pages/DashboardPage';
 import Admin from './pages/Admin';
 import InviteHandler from './pages/InviteHandler';
 import FriendAddHandler from './pages/FriendAddHandler';
+import { PushTestPage } from './pages/PushTestPage';
 import { getApiUrl } from './utils/api';
 import { usePushNotifications } from './hooks/usePushNotifications';
 
@@ -46,6 +47,7 @@ function App() {
           <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
           <Route path="/invite/:code" element={<InviteHandler />} />
           <Route path="/add-friend/:code" element={<FriendAddHandler />} />
+          <Route path="/push-test" element={<PushTestPage />} />
           <Route path="/" element={token ? <Dashboard /> : <Navigate to="/login" />} />
           <Route path="/admin" element={token ? <Admin /> : <Navigate to="/login" />} />
         </Routes>
