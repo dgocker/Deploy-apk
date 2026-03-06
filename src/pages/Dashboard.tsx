@@ -763,13 +763,37 @@ export default function Dashboard() {
             <Users size={24} className="text-zinc-400" />
             Друзья
           </h2>
-          <button 
-            onClick={generateFriendLink}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors"
-          >
-            {linkCopied ? <CheckCircle2 size={16} /> : <Share2 size={16} />}
-            {linkCopied ? 'Скопировано!' : 'Пригласить друга'}
-          </button>
+          <div className="flex gap-2">
+            <button 
+              onClick={async () => {
+                try {
+                  const apiUrl = getApiUrl();
+                  const res = await fetch(`${apiUrl}/api/auth/test-push`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${token}` }
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    alert('Тестовый пуш отправлен! Сверните приложение, чтобы увидеть его.');
+                  } else {
+                    alert('Ошибка: ' + (data.error || 'Неизвестная ошибка'));
+                  }
+                } catch (e) {
+                  alert('Ошибка сети');
+                }
+              }}
+              className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              Тест Пуш
+            </button>
+            <button 
+              onClick={generateFriendLink}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-medium transition-colors"
+            >
+              {linkCopied ? <CheckCircle2 size={16} /> : <Share2 size={16} />}
+              {linkCopied ? 'Скопировано!' : 'Пригласить друга'}
+            </button>
+          </div>
         </div>
 
         <div className="grid gap-4">
