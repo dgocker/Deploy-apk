@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { db } from './db.js';
+import { sendPushNotification } from './firebaseAdmin.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'supersecretkey';
 
@@ -49,15 +50,34 @@ export function setupSocket(io: Server) {
     });
 
     // WebRTC Signaling
-    socket.on('call_user', (data) => {
+    socket.on('call_user', async (data) => {
       const { userToCall, from, name } = data;
       const targetSockets = onlineUsers.get(userToCall);
+      
+      // Always try to send a push notification to wake up the app
+      try {
+        const targetUser = await db.prepare('SELECT fcm_token FROM users WHERE id = ?').get(userToCall) as any;
+        if (targetUser && targetUser.fcm_token) {
+          await sendPushNotification(
+            targetUser.fcm_token,
+            'Входящий звонок',
+            `Вам звонит ${name}`,
+            { type: 'incoming_call', from: String(from), name, fromSocketId: socket.id }
+          );
+        }
+      } catch (error) {
+        console.error('Error sending push notification for call:', error);
+      }
+
       if (targetSockets && targetSockets.size > 0) {
         targetSockets.forEach(socketId => {
           io.to(socketId).emit('call_incoming', { from, name, fromSocketId: socket.id });
         });
       } else {
-        socket.emit('user_offline');
+        // If they have no active sockets, we still sent a push, but we let the caller know they are offline
+        // Wait, if we sent a push, they might come online soon. We can emit a "ringing" state.
+        // For now, let's keep the existing behavior but maybe add a delay or just emit 'user_offline' if no FCM token
+        socket.emit('call_ringing', { message: 'Отправлено push-уведомление...' });
       }
     });
 

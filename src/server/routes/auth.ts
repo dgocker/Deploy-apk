@@ -221,4 +221,23 @@ router.get('/me', authenticateToken, (req: AuthRequest, res) => {
   res.json({ user: req.user });
 });
 
+router.post('/fcm-token', authenticateToken, async (req: AuthRequest, res) => {
+  const { fcmToken } = req.body;
+  
+  if (!fcmToken) {
+    return res.status(400).json({ error: 'FCM token is required' });
+  }
+  
+  try {
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    
+    await db.prepare('UPDATE users SET fcm_token = ? WHERE id = ?').run(fcmToken, userId);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating FCM token:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 export default router;

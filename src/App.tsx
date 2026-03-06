@@ -6,15 +6,13 @@ import Dashboard from './pages/Dashboard';
 import Admin from './pages/Admin';
 import InviteHandler from './pages/InviteHandler';
 import FriendAddHandler from './pages/FriendAddHandler';
-import { initializePushNotifications } from './utils/pushNotifications';
 import { getApiUrl } from './utils/api';
+import { usePushNotifications } from './hooks/usePushNotifications';
 
 function App() {
   const { token, setUser, logout } = useStore();
 
-  useEffect(() => {
-    initializePushNotifications();
-  }, []);
+  usePushNotifications();
 
   useEffect(() => {
     if (token) {

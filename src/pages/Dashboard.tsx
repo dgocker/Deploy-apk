@@ -403,6 +403,14 @@ export default function Dashboard() {
       }
     });
 
+    newSocket.on('call_ringing', (data) => {
+      console.log('Call ringing via push notification:', data.message);
+      if (connectionTimeoutRef.current) {
+        clearTimeout(connectionTimeoutRef.current);
+        connectionTimeoutRef.current = null;
+      }
+    });
+
     newSocket.on('user_busy', () => {
       alert('Пользователь занят');
       handleCallEnded();

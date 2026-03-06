@@ -8,11 +8,15 @@ import path from 'path';
 import jwt from 'jsonwebtoken';
 import { db, initDb } from './src/server/db.js';
 import { setupSocket } from './src/server/socket.js';
+import { initFirebaseAdmin } from './src/server/firebaseAdmin.js';
 import authRoutes from './src/server/routes/auth.js';
 import adminRoutes from './src/server/routes/admin.js';
 import friendRoutes from './src/server/routes/friends.js';
 
 dotenv.config();
+
+// Initialize Firebase Admin for Push Notifications
+initFirebaseAdmin();
 
 const PORT = 3000;
 
