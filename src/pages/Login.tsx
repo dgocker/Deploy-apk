@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { FirebaseAuthentication } from '@capacitor-firebase/authentication';
+import { getApiUrl } from '../utils/api';
 
 // Initialize Firebase for Web if config is present
 const firebaseConfig = {
@@ -105,7 +106,7 @@ export default function Login() {
         }
 
         try {
-          const apiUrl = import.meta.env.VITE_API_URL || '';
+          const apiUrl = getApiUrl();
           const response = await fetch(`${apiUrl}/api/auth/telegram`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -124,7 +125,7 @@ export default function Login() {
             const pendingFriendCode = localStorage.getItem('pending_friend_code');
             if (pendingFriendCode) {
               try {
-                 await fetch('/api/friends/add', {
+                 await fetch(`${apiUrl}/api/friends/add`, {
                    method: 'POST',
                    headers: { 
                      'Content-Type': 'application/json',
@@ -175,7 +176,7 @@ export default function Login() {
       }
 
       // Auto-login
-      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const apiUrl = getApiUrl();
       fetch(`${apiUrl}/api/auth/telegram-webapp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -192,7 +193,7 @@ export default function Login() {
           const pendingFriendCode = localStorage.getItem('pending_friend_code');
           if (pendingFriendCode) {
              try {
-               await fetch('/api/friends/add', {
+               await fetch(`${apiUrl}/api/friends/add`, {
                  method: 'POST',
                  headers: { 
                    'Content-Type': 'application/json',
@@ -264,7 +265,7 @@ export default function Login() {
       const pendingFriendCode = localStorage.getItem('pending_friend_code');
       
       // Send to backend
-      const apiUrl = import.meta.env.VITE_API_URL || '';
+      const apiUrl = getApiUrl();
       const response = await fetch(`${apiUrl}/api/auth/google`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -290,7 +291,7 @@ export default function Login() {
 
         if (pendingFriendCode) {
            try {
-             await fetch('/api/friends/add', {
+             await fetch(`${apiUrl}/api/friends/add`, {
                method: 'POST',
                headers: { 
                  'Content-Type': 'application/json',
