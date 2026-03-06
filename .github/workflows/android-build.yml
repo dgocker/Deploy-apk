@@ -41,6 +41,28 @@ jobs:
             npx cap sync android
           fi
 
+      - name: Setup Persistent Debug Keystore
+        env:
+          DEBUG_KEYSTORE_BASE64: ${{ secrets.DEBUG_KEYSTORE_BASE64 }}
+        run: |
+          mkdir -p ~/.android
+          if [ -n "$DEBUG_KEYSTORE_BASE64" ]; then
+            echo "Using provided debug keystore from secrets..."
+            echo "$DEBUG_KEYSTORE_BASE64" | base64 --decode > ~/.android/debug.keystore
+          else
+            echo "Warning: DEBUG_KEYSTORE_BASE64 secret is not set. Generating a temporary one."
+            echo "This means your SHA-1 will change on every build. To fix this, generate a keystore locally,"
+            echo "convert it to base64, and add it as a GitHub Secret named DEBUG_KEYSTORE_BASE64."
+            keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "C=US, O=Android, CN=Android Debug"
+            
+            echo "================================================================="
+            echo "COPY THE FOLLOWING BASE64 STRING AND ADD IT TO GITHUB SECRETS AS 'DEBUG_KEYSTORE_BASE64':"
+            echo "================================================================="
+            base64 ~/.android/debug.keystore | tr -d '\n'
+            echo ""
+            echo "================================================================="
+          fi
+
       - name: Write google-services.json
         env:
           GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
