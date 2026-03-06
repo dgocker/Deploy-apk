@@ -3,6 +3,7 @@ import { useStore } from '../store/useStore';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Shield, Plus, Copy, CheckCircle2, ArrowLeft, Share2, Trash2 } from 'lucide-react';
+import { getApiUrl } from '../utils/api';
 
 export default function Admin() {
   const { user, token } = useStore();
@@ -23,7 +24,8 @@ export default function Admin() {
 
   const fetchInvites = async () => {
     try {
-      const res = await fetch('/api/admin/invites', {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/admin/invites`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -35,7 +37,8 @@ export default function Admin() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch('/api/admin/users', {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/admin/users`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const data = await res.json();
@@ -49,7 +52,8 @@ export default function Admin() {
     if (!confirm('Вы уверены, что хотите удалить этого пользователя? Это действие необратимо.')) return;
     
     try {
-      const res = await fetch(`/api/admin/users/${userId}`, {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/admin/users/${userId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -67,7 +71,8 @@ export default function Admin() {
 
   const generateInvite = async () => {
     try {
-      const res = await fetch('/api/admin/invites', {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/admin/invites`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` }
       });
