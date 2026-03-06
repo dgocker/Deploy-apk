@@ -1,28 +1,60 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 export function usePermissions() {
-  useEffect(() => {
-    const requestPermissions = async () => {
-      if (!Capacitor.isNativePlatform()) return;
+  const [permissionsGranted, setPermissionsGranted] = useState(true);
+  const [checking, setChecking] = useState(true);
 
-      const hasRequested = localStorage.getItem('permissions_requested');
-      if (hasRequested) return;
+  useEffect(() => {
+    const checkPermissions = async () => {
+      if (!Capacitor.isNativePlatform()) {
+        setChecking(false);
+        return;
+      }
 
       try {
-        // Request camera and microphone permissions by trying to access them
+        // Check Camera/Microphone
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        // Immediately stop the stream
         stream.getTracks().forEach(track => track.stop());
-        console.log('Camera and Microphone permissions granted');
-        localStorage.setItem('permissions_requested', 'true');
+
+        // Check Push Notifications
+        const pushStatus = await PushNotifications.checkPermissions();
+        
+        if (pushStatus.receive === 'granted') {
+          setPermissionsGranted(true);
+        } else {
+          setPermissionsGranted(false);
+        }
       } catch (err) {
-        console.error('Camera/Microphone permissions denied or not available', err);
-        alert('Для совершения звонков необходимо разрешить доступ к камере и микрофону в настройках приложения.');
-        localStorage.setItem('permissions_requested', 'true');
+        setPermissionsGranted(false);
+      } finally {
+        setChecking(false);
       }
     };
 
-    requestPermissions();
+    checkPermissions();
   }, []);
+
+  const requestAllPermissions = async () => {
+    if (!Capacitor.isNativePlatform()) return;
+
+    try {
+      // Request Camera/Microphone
+      await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      
+      // Request Push Notifications
+      const pushStatus = await PushNotifications.requestPermissions();
+      
+      if (pushStatus.receive === 'granted') {
+        setPermissionsGranted(true);
+      } else {
+        alert('Пожалуйста, предоставьте все разрешения в настройках приложения для корректной работы.');
+      }
+    } catch (err) {
+      alert('Не удалось получить разрешения. Пожалуйста, включите их вручную в настройках.');
+    }
+  };
+
+  return { permissionsGranted, checking, requestAllPermissions };
 }
