@@ -71,31 +71,22 @@ export async function sendPushNotification(fcmToken: string, title: string, body
 
     // Special handling for incoming calls (VoIP)
     if (data && data.type === 'incoming_call') {
-      // ALTERNATIVE APPROACH: Standard Notification
-      // Since Full Screen Intent is unreliable on some devices (OEM restrictions),
-      // we fallback to a standard high-priority system notification.
-      // The user must TAP the notification to answer.
+      // DATA-ONLY MESSAGE for Incoming Calls
+      // This is crucial for Android Foreground Service to work correctly.
+      // If we include a 'notification' payload, Android system handles it and app code doesn't run.
+      // We want app code to run to start the Foreground Service.
       
-      message.notification = {
-        title: title || 'Входящий звонок',
-        body: body || 'Нажмите, чтобы ответить',
-      };
-
+      // Do NOT set message.notification
+      
       message.android = {
         priority: 'high',
-        notification: {
-          channelId: 'call_channel',
-          priority: 'high',
-          defaultSound: true,
-          defaultVibrateTimings: true,
-          visibility: 'public',
-          icon: 'ic_launcher',
-          clickAction: 'FCM_PLUGIN_ACTIVITY', // Standard for Capacitor
-        }
+        ttl: 0, // Deliver immediately or drop
       };
 
       message.data = {
         ...data,
+        title: title || 'Входящий звонок',
+        body: body || 'Нажмите, чтобы ответить',
         // Ensure all values are strings
         ...Object.fromEntries(
           Object.entries(data)
@@ -104,8 +95,8 @@ export async function sendPushNotification(fcmToken: string, title: string, body
         )
       };
       
-      // Remove apns payload for Android if strictly targeting Android, 
-      // but we might need it for iOS later. For now, keep it simple.
+      // For iOS (APNS), we still might need alert to wake up app if not using VoIP push
+      // But for now let's focus on Android data-only
     } else {
       // Standard notification
       message.notification = {
