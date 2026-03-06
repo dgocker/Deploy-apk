@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
+import Dashboard from './pages/DashboardPage';
 import Admin from './pages/Admin';
 import InviteHandler from './pages/InviteHandler';
 import FriendAddHandler from './pages/FriendAddHandler';
