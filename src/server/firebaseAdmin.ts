@@ -1,15 +1,35 @@
 import admin from 'firebase-admin';
+import fs from 'fs';
+import path from 'path';
 
 export function initFirebaseAdmin() {
   try {
-    const credentialsJson = process.env.FIREBASE_ADMIN_CREDENTIALS;
-    
-    if (!credentialsJson) {
-      console.warn('FIREBASE_ADMIN_CREDENTIALS environment variable is not set. Push notifications will be disabled.');
-      return;
-    }
+    let serviceAccount;
 
-    const serviceAccount = JSON.parse(credentialsJson);
+    // Method 1: Base64 encoded JSON in environment variable (Render friendly)
+    if (process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64) {
+      const decoded = Buffer.from(process.env.FIREBASE_ADMIN_CREDENTIALS_BASE64, 'base64').toString('utf-8');
+      serviceAccount = JSON.parse(decoded);
+      console.log('Using Base64 encoded Firebase credentials.');
+    } 
+    // Method 2: Raw JSON string in environment variable
+    else if (process.env.FIREBASE_ADMIN_CREDENTIALS) {
+      serviceAccount = JSON.parse(process.env.FIREBASE_ADMIN_CREDENTIALS);
+      console.log('Using raw JSON string Firebase credentials.');
+    }
+    // Method 3: Secret file mounted on Render (or local file)
+    else {
+      const secretFilePath = path.resolve(process.cwd(), 'firebase-service-account.json');
+      if (fs.existsSync(secretFilePath)) {
+        const fileContent = fs.readFileSync(secretFilePath, 'utf8');
+        serviceAccount = JSON.parse(fileContent);
+        console.log('Using secret file for Firebase credentials.');
+      } else {
+        console.warn('No Firebase credentials found. Push notifications will be disabled.');
+        console.warn('Please set FIREBASE_ADMIN_CREDENTIALS_BASE64, FIREBASE_ADMIN_CREDENTIALS, or provide firebase-service-account.json');
+        return;
+      }
+    }
 
     admin.initializeApp({
       credential: admin.credential.cert(serviceAccount),
