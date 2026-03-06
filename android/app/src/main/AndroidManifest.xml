@@ -54,7 +54,7 @@
             android:foregroundServiceType="phoneCall" />
 
         <service
-            android:name=".CallForegroundService"
+            android:name="io.capawesome.capacitorjs.plugins.foregroundservice.AndroidForegroundService"
             android:foregroundServiceType="phoneCall"
             android:exported="false" />
 
