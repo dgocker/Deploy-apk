@@ -29,33 +29,30 @@ export async function sendPushNotification(fcmToken: string, title: string, body
 
   try {
     const message = {
-      notification: {
-        title,
-        body,
+      data: {
+        ...data,
+        type: data?.type || 'incoming_call',
       },
-      data: data || {},
       token: fcmToken,
       android: {
         priority: 'high' as const,
-        notification: {
-          channelId: 'calls', // Important for Android 8+ to wake up the app
-          sound: 'ringtone',
-          defaultVibrateTimings: true,
-          defaultLightSettings: true,
-        },
       },
       apns: {
+        headers: {
+          'apns-priority': '10',
+        },
         payload: {
           aps: {
+            'content-available': 1,
             sound: 'default',
-            contentAvailable: true,
+            category: 'INCOMING_CALL',
           },
         },
       },
     };
 
     const response = await admin.messaging().send(message);
-    console.log('Successfully sent push notification:', response);
+    console.log('Successfully sent data-only push notification:', response);
     return response;
   } catch (error) {
     console.error('Error sending push notification:', error);
