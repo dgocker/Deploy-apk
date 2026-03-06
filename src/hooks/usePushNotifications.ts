@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import { CallKitVoip } from '@techrover_solutions/capacitor-callkit-voip';
+import { ForegroundService } from '@capawesome-team/capacitor-android-foreground-service';
 import { useStore } from '../store/useStore';
 import { getApiUrl } from '../utils/api';
 
@@ -105,18 +106,50 @@ export function usePushNotifications() {
         console.log('Incoming call push received, storing in pendingCall');
         useStore.getState().setPendingCall(notification.data);
 
-        // Report to CallKit
-        try {
-          await (CallKitVoip as any).reportNewIncomingCall({
-            callId: notification.data.callId || generateUUID(),
-            callerName: notification.data.callerName || notification.data.name || 'Unknown',
-            handle: notification.data.callerId || notification.data.from || 'Unknown',
-            hasVideo: notification.data.isVideo === 'true' || notification.data.isVideo === true
-          });
-        } catch (e) {
-          console.error('Error reporting incoming call to CallKit:', e);
+        // Start Foreground Service on Android
+        if (Capacitor.getPlatform() === 'android') {
+            try {
+                await ForegroundService.startForegroundService({
+                    id: 1001,
+                    title: 'Входящий звонок',
+                    body: `${notification.data.name || 'Неизвестный'} звонит. Нажмите, чтобы ответить.`,
+                    smallIcon: 'ic_launcher_round',
+                    buttons: [
+                        { id: 1, title: 'Ответить' },
+                        { id: 2, title: 'Сбросить' }
+                    ],
+                    notificationChannelId: 'call_channel'
+                });
+            } catch (e) {
+                console.error('Failed to start foreground service:', e);
+            }
+        } else {
+            // iOS fallback to CallKit
+            try {
+              await (CallKitVoip as any).reportNewIncomingCall({
+                callId: notification.data.callId || generateUUID(),
+                callerName: notification.data.callerName || notification.data.name || 'Unknown',
+                handle: notification.data.callerId || notification.data.from || 'Unknown',
+                hasVideo: notification.data.isVideo === 'true' || notification.data.isVideo === true
+              });
+            } catch (e) {
+              console.error('Error reporting incoming call to CallKit:', e);
+            }
         }
       }
+    });
+
+    // Listen for foreground service button clicks
+    const foregroundButtonListener = ForegroundService.addListener('buttonClicked', async (event) => {
+        if (event.buttonId === 2) { // Reject
+            await ForegroundService.stopForegroundService();
+            useStore.getState().setPendingCall(null);
+        } else if (event.buttonId === 1) { // Accept
+            await ForegroundService.stopForegroundService();
+            // We assume the user tapped the notification body to open the app.
+            // If they tapped the button, the app might not open automatically depending on OS.
+            // But we stop the service sound.
+        }
     });
 
     // Method called when tapping on a notification
@@ -127,17 +160,20 @@ export function usePushNotifications() {
       if (notification.notification.data && notification.notification.data.type === 'incoming_call') {
         console.log('Incoming call push performed, storing in pendingCall');
         useStore.getState().setPendingCall(notification.notification.data);
+        
+        // Stop service if we tapped the notification
+        if (Capacitor.getPlatform() === 'android') {
+            ForegroundService.stopForegroundService().catch(console.error);
+        }
       }
     });
 
-    // Listen for VoIP calls (CallKit)
+    // Listen for VoIP calls (CallKit) - iOS mainly now
     const callListener = (CallKitVoip as any).addListener('incomingCall', (call: any) => {
       console.log('Incoming VoIP call received (CallKit event):', call);
-      // Trigger ringing screen
       if (call.data) {
          useStore.getState().setPendingCall(call.data);
       } else {
-         // Fallback using available info
          useStore.getState().setPendingCall({
              from: call.handle || call.callerId,
              name: call.callerName || 'Unknown',
@@ -149,9 +185,6 @@ export function usePushNotifications() {
 
     const answerListener = (CallKitVoip as any).addListener('answerCall', (call: any) => {
         console.log('Call answered via CallKit UI:', call);
-        // Here we should probably navigate to the call screen or emit 'answer_call' socket event if we had access to socket
-        // Since we don't have socket here, we rely on the UI component (Dashboard) to pick up the state change
-        // or we can set a flag in the store
         useStore.getState().setPendingCall({
             ...useStore.getState().pendingCall,
             answered: true
@@ -171,6 +204,7 @@ export function usePushNotifications() {
       callListener.then(l => l.remove());
       answerListener.then(l => l.remove());
       endListener.then(l => l.remove());
+      foregroundButtonListener.then(l => l.remove());
     };
   }, [token]);
 }
