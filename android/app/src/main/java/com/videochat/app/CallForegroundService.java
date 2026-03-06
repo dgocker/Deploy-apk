@@ -12,6 +12,10 @@ import android.os.Build;
 public class CallForegroundService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel();
+        }
+
         String callerName = intent.getStringExtra("callerName");
         
         Intent fullScreenIntent = new Intent(this, MainActivity.class);
@@ -19,7 +23,7 @@ public class CallForegroundService extends Service {
         PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(this, 0,
                 fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
-        Notification notification = new NotificationCompat.Builder(this, "call_channel")
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, "call_channel")
                 .setContentTitle("Входящий звонок")
                 .setContentText("От " + (callerName != null ? callerName : "Unknown"))
                 .setSmallIcon(R.mipmap.ic_launcher)
@@ -27,8 +31,9 @@ public class CallForegroundService extends Service {
                 .setCategory(NotificationCompat.CATEGORY_CALL)
                 .setFullScreenIntent(fullScreenPendingIntent, true)
                 .setAutoCancel(true)
-                .setOngoing(true)
-                .build();
+                .setOngoing(true);
+
+        Notification notification = builder.build();
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             try {
@@ -42,6 +47,31 @@ public class CallForegroundService extends Service {
         }
         
         return START_STICKY;
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            android.app.NotificationChannel serviceChannel = new android.app.NotificationChannel(
+                    "call_channel",
+                    "Incoming Calls",
+                    android.app.NotificationManager.IMPORTANCE_HIGH
+            );
+            serviceChannel.setDescription("Notifications for incoming calls");
+            serviceChannel.enableVibration(true);
+            serviceChannel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            
+            // Set sound
+            android.media.AudioAttributes audioAttributes = new android.media.AudioAttributes.Builder()
+                    .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                    .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION_RINGTONE)
+                    .build();
+            serviceChannel.setSound(android.provider.Settings.System.DEFAULT_RINGTONE_URI, audioAttributes);
+
+            android.app.NotificationManager manager = getSystemService(android.app.NotificationManager.class);
+            if (manager != null) {
+                manager.createNotificationChannel(serviceChannel);
+            }
+        }
     }
 
     @Override
