@@ -242,12 +242,12 @@ router.post('/fcm-token', authenticateToken, async (req: AuthRequest, res) => {
 
 router.post('/test-push', authenticateToken, async (req: AuthRequest, res) => {
   try {
-    const userId = req.user?.id;
-    if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+    const { targetUserId } = req.body;
+    if (!targetUserId) return res.status(400).json({ error: 'targetUserId is required' });
     
-    const user = await db.prepare('SELECT fcm_token FROM users WHERE id = ?').get(userId) as any;
+    const user = await db.prepare('SELECT fcm_token FROM users WHERE id = ?').get(targetUserId) as any;
     if (!user || !user.fcm_token) {
-      return res.status(400).json({ error: 'No FCM token found for user' });
+      return res.status(400).json({ error: 'No FCM token found for target user' });
     }
     
     const { sendPushNotification } = await import('../firebaseAdmin.js');
