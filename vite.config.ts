@@ -22,5 +22,9 @@ export default defineConfig({
     rollupOptions: {
       external: ['node:fs', 'node:path', 'fs', 'path']
     }
+  },
+  optimizeDeps: {
+    include: ['@capawesome-team/capacitor-android-foreground-service']
   }
 });
+
