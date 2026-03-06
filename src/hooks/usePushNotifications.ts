@@ -34,7 +34,7 @@ export function usePushNotifications() {
           // 4. Create a high-priority channel for calls (Android 8+)
           if (Capacitor.getPlatform() === 'android') {
             await PushNotifications.createChannel({
-              id: 'calls',
+              id: 'calls_v2',
               name: 'Входящие звонки',
               description: 'Уведомления о входящих видеозвонках',
               importance: 5, // 5 = MAX (Heads-up notification, wakes screen)
@@ -44,7 +44,7 @@ export function usePushNotifications() {
               lights: true,
               lightColor: '#10B981', // Emerald 500
             });
-            console.log('Channel "calls" created successfully');
+            console.log('Channel "calls_v2" created successfully');
           }
         } else {
           console.warn('User denied push notification permission - POST_NOTIFICATIONS denied');
