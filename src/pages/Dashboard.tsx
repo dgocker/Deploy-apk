@@ -10,7 +10,7 @@ import { getApiUrl } from '../utils/api';
 const EMOJIS = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🪲', '🪳', '🕷', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🪶', '🐓', '🦃', '🦤', '🦚', '🦜', '🦢', '🦩', '🕊', '🐇', '🦝', '🦨', '🦡', '🦦', '🦥', '🐁', '🐀', '🐿', '🦔'];
 
 export default function Dashboard() {
-  const { user, token, logout, onlineFriends, setOnlineFriends, addOnlineFriend, removeOnlineFriend } = useStore();
+  const { user, token, logout, onlineFriends, setOnlineFriends, addOnlineFriend, removeOnlineFriend, pendingCall, setPendingCall } = useStore();
   const navigate = useNavigate();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [friends, setFriends] = useState<any[]>([]);
@@ -30,6 +30,15 @@ export default function Dashboard() {
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   const lastClickTimeRef = useRef(0);
   const clickCountRef = useRef(0);
+
+  // Handle pending call from push notification
+  useEffect(() => {
+    if (pendingCall) {
+      console.log('Found pending call in store, setting incoming call:', pendingCall);
+      setIncomingCall(pendingCall);
+      setPendingCall(null);
+    }
+  }, [pendingCall, setPendingCall]);
 
   // Refs for socket event handlers
   const callActiveRef = useRef(callActive);
