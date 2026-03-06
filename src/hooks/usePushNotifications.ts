@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
+import { CallKitVoip } from '@techrover_solutions/capacitor-callkit-voip';
 import { useStore } from '../store/useStore';
 import { getApiUrl } from '../utils/api';
 
@@ -34,17 +35,17 @@ export function usePushNotifications() {
           // 4. Create a high-priority channel for calls (Android 8+)
           if (Capacitor.getPlatform() === 'android') {
             await PushNotifications.createChannel({
-              id: 'calls_v2',
+              id: 'call_channel',
               name: 'Входящие звонки',
               description: 'Уведомления о входящих видеозвонках',
               importance: 5, // 5 = MAX (Heads-up notification, wakes screen)
               visibility: 1, // 1 = PUBLIC (Shows on lock screen)
-              sound: 'default', // Changed from 'ringtone' to 'default' to match backend payload
+              sound: 'ringtone', // Custom ringtone
               vibration: true,
               lights: true,
               lightColor: '#10B981', // Emerald 500
             });
-            console.log('Channel "calls_v2" created successfully');
+            console.log('Channel "call_channel" created successfully');
           }
         } else {
           console.warn('User denied push notification permission - POST_NOTIFICATIONS denied');
@@ -104,11 +105,30 @@ export function usePushNotifications() {
       }
     });
 
+    // Listen for VoIP calls (CallKit)
+    const callListener = (CallKitVoip as any).addListener('incomingCall', (call: any) => {
+      console.log('Incoming VoIP call received:', call);
+      // Trigger ringing screen
+      // The plugin should handle the native UI, but we need to update our app state
+      // to show the call screen when the user answers or opens the app
+      if (call.data) {
+         useStore.getState().setPendingCall(call.data);
+      } else {
+         // Fallback using available info
+         useStore.getState().setPendingCall({
+             from: call.callerId,
+             name: call.callerName || 'Unknown',
+             type: 'incoming_call'
+         });
+      }
+    });
+
     return () => {
       registrationListener.then(l => l.remove());
       errorListener.then(l => l.remove());
       pushReceivedListener.then(l => l.remove());
       pushActionPerformedListener.then(l => l.remove());
+      callListener.then(l => l.remove());
     };
   }, [token]);
 }
