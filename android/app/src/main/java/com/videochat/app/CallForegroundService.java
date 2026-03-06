@@ -49,6 +49,12 @@ public class CallForegroundService extends Service {
             startForeground(999, notification);
         }
         
+        // Duplicate launch of Activity for reliability
+        Intent intent = new Intent(this, IncomingCallActivity.class);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        intent.putExtra("callerName", callerName);
+        startActivity(intent);
+        
         return START_STICKY;
     }
 
