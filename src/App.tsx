@@ -7,6 +7,7 @@ import Admin from './pages/Admin';
 import InviteHandler from './pages/InviteHandler';
 import FriendAddHandler from './pages/FriendAddHandler';
 import { initializePushNotifications } from './utils/pushNotifications';
+import { getApiUrl } from './utils/api';
 
 function App() {
   const { token, setUser, logout } = useStore();
@@ -17,15 +18,26 @@ function App() {
 
   useEffect(() => {
     if (token) {
-      fetch('/api/auth/me', {
+      // Use env var or fallback to production URL if empty (especially important for APK)
+      const apiUrl = getApiUrl();
+      fetch(`${apiUrl}/api/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       })
-      .then(res => {
+      .then(async res => {
         if (!res.ok) throw new Error('Invalid token');
+        
+        const contentType = res.headers.get("content-type");
+        if (!contentType || !contentType.includes("application/json")) {
+          throw new Error("Server returned non-JSON response");
+        }
+        
         return res.json();
       })
       .then(data => setUser(data.user))
-      .catch(() => logout());
+      .catch((err) => {
+        console.error("Auth check failed:", err);
+        logout();
+      });
     }
   }, [token, setUser, logout]);
 
