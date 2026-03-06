@@ -27,8 +27,9 @@ public class CallForegroundService extends Service {
                 .setContentTitle("Входящий звонок")
                 .setContentText("От " + (callerName != null ? callerName : "Unknown"))
                 .setSmallIcon(R.mipmap.ic_launcher)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setPriority(NotificationCompat.PRIORITY_MAX)
                 .setCategory(NotificationCompat.CATEGORY_CALL)
+                .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
                 .setFullScreenIntent(fullScreenPendingIntent, true)
                 .setAutoCancel(true)
                 .setOngoing(true);
