@@ -14,11 +14,13 @@ interface StoreState {
   user: User | null;
   token: string | null;
   onlineFriends: number[];
+  pendingCall: any | null;
   setUser: (user: User | null) => void;
   setToken: (token: string | null) => void;
   setOnlineFriends: (friends: number[]) => void;
   addOnlineFriend: (id: number) => void;
   removeOnlineFriend: (id: number) => void;
+  setPendingCall: (call: any | null) => void;
   logout: () => void;
 }
 
@@ -26,6 +28,7 @@ export const useStore = create<StoreState>((set) => ({
   user: null,
   token: localStorage.getItem('token'),
   onlineFriends: [],
+  pendingCall: null,
   setUser: (user) => set({ user }),
   setToken: (token) => {
     if (token) {
@@ -42,8 +45,9 @@ export const useStore = create<StoreState>((set) => ({
   removeOnlineFriend: (id) => set((state) => ({ 
     onlineFriends: state.onlineFriends.filter(fId => fId !== id) 
   })),
+  setPendingCall: (pendingCall) => set({ pendingCall }),
   logout: () => {
     localStorage.removeItem('token');
-    set({ user: null, token: null, onlineFriends: [] });
+    set({ user: null, token: null, onlineFriends: [], pendingCall: null });
   }
 }));
