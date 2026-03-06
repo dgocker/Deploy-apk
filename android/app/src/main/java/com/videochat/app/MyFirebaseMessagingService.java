@@ -1,51 +1,31 @@
 package com.videochat.app;
 
-import android.app.Notification;
-import android.app.PendingIntent;
-import android.app.Service;
+import com.google.firebase.messaging.FirebaseMessagingService;
+import com.google.firebase.messaging.RemoteMessage;
 import android.content.Intent;
-import android.os.IBinder;
-import androidx.core.app.NotificationCompat;
-import android.content.pm.ServiceInfo;
-import android.os.Build;
+import androidx.core.content.ContextCompat;
+import android.util.Log;
 
-public class CallForegroundService extends Service {
+public class MyFirebaseMessagingService extends FirebaseMessagingService {
     @Override
-    public int onStartCommand(Intent intent, int flags, int startId) {
-        String callerName = intent.getStringExtra("callerName");
+    public void onMessageReceived(RemoteMessage remoteMessage) {
+        super.onMessageReceived(remoteMessage);
         
-        Intent fullScreenIntent = new Intent(this, MainActivity.class);
-        fullScreenIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
-        PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(this, 0,
-                fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+        Log.d("MyFirebaseMsgService", "From: " + remoteMessage.getFrom());
 
-        Notification notification = new NotificationCompat.Builder(this, "call_channel")
-                .setContentTitle("Входящий звонок")
-                .setContentText("От " + (callerName != null ? callerName : "Unknown"))
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setPriority(NotificationCompat.PRIORITY_HIGH)
-                .setCategory(NotificationCompat.CATEGORY_CALL)
-                .setFullScreenIntent(fullScreenPendingIntent, true)
-                .setAutoCancel(true)
-                .setOngoing(true)
-                .build();
+        // Check if message contains a data payload.
+        if (remoteMessage.getData().size() > 0) {
+            Log.d("MyFirebaseMsgService", "Message data payload: " + remoteMessage.getData());
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            try {
-                startForeground(999, notification, ServiceInfo.FOREGROUND_SERVICE_TYPE_PHONE_CALL);
-            } catch (Exception e) {
-                // Fallback if permission is missing or other error
-                startForeground(999, notification);
+            if (remoteMessage.getData().containsKey("type") && "incoming_call".equals(remoteMessage.getData().get("type"))) {
+                Intent serviceIntent = new Intent(this, CallForegroundService.class);
+                String callerName = remoteMessage.getData().get("callerName");
+                if (callerName == null) {
+                    callerName = remoteMessage.getData().get("name");
+                }
+                serviceIntent.putExtra("callerName", callerName);
+                ContextCompat.startForegroundService(this, serviceIntent);
             }
-        } else {
-            startForeground(999, notification);
         }
-        
-        return START_STICKY;
-    }
-
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
     }
 }
