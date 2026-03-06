@@ -49,6 +49,10 @@ export async function sendPushNotification(fcmToken: string, title: string, body
 
   try {
     const message = {
+      notification: {
+        title: title,
+        body: body,
+      },
       data: {
         ...data,
         type: data?.type || 'incoming_call',
@@ -56,6 +60,10 @@ export async function sendPushNotification(fcmToken: string, title: string, body
       token: fcmToken,
       android: {
         priority: 'high' as const,
+        notification: {
+          channelId: 'calls',
+          sound: 'default',
+        }
       },
       apns: {
         headers: {
@@ -72,7 +80,7 @@ export async function sendPushNotification(fcmToken: string, title: string, body
     };
 
     const response = await admin.messaging().send(message);
-    console.log('Successfully sent data-only push notification:', response);
+    console.log('Successfully sent push notification:', response);
     return response;
   } catch (error) {
     console.error('Error sending push notification:', error);
