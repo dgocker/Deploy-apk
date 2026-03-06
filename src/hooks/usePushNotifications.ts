@@ -17,16 +17,21 @@ export function usePushNotifications() {
       }
 
       try {
-        // Request permission to use push notifications
-        // iOS will prompt user and return if they granted permission or not
-        // Android will just grant without prompting
-        const permStatus = await PushNotifications.requestPermissions();
+        // 1. Check permissions first
+        let permStatus = await PushNotifications.checkPermissions();
+        console.log('Push permission status:', permStatus.receive);
+
+        // 2. Request if not granted
+        if (permStatus.receive !== 'granted') {
+          permStatus = await PushNotifications.requestPermissions();
+          console.log('Requested push permission:', permStatus.receive);
+        }
 
         if (permStatus.receive === 'granted') {
-          // Register with Apple / Google to receive push via APNS/FCM
+          // 3. Register with Apple / Google to receive push via APNS/FCM
           await PushNotifications.register();
           
-          // Create a high-priority channel for calls (Android 8+)
+          // 4. Create a high-priority channel for calls (Android 8+)
           if (Capacitor.getPlatform() === 'android') {
             await PushNotifications.createChannel({
               id: 'calls',
@@ -34,14 +39,15 @@ export function usePushNotifications() {
               description: 'Уведомления о входящих видеозвонках',
               importance: 5, // 5 = MAX (Heads-up notification, wakes screen)
               visibility: 1, // 1 = PUBLIC (Shows on lock screen)
-              sound: 'ringtone', // Uses default ringtone or custom if provided
+              sound: 'default', // Changed from 'ringtone' to 'default' to match backend payload
               vibration: true,
               lights: true,
               lightColor: '#10B981', // Emerald 500
             });
+            console.log('Channel "calls" created successfully');
           }
         } else {
-          console.warn('User denied push notification permission');
+          console.warn('User denied push notification permission - POST_NOTIFICATIONS denied');
         }
       } catch (error) {
         console.error('Error requesting push notification permissions:', error);
@@ -106,3 +112,4 @@ export function usePushNotifications() {
     };
   }, [token]);
 }
+
