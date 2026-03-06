@@ -39,7 +39,9 @@ export async function sendPushNotification(fcmToken: string, title: string, body
         priority: 'high' as const,
         notification: {
           channelId: 'calls', // Important for Android 8+ to wake up the app
-          sound: 'default',
+          sound: 'ringtone',
+          defaultVibrateTimings: true,
+          defaultLightSettings: true,
         },
       },
       apns: {
