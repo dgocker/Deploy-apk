@@ -74,11 +74,17 @@ jobs:
             echo "Warning: GOOGLE_SERVICES_JSON secret is not set. Firebase features will not work."
           fi
 
-      - name: Make gradlew executable
+      - name: Debug and Make gradlew executable
         working-directory: android
         run: |
-          chmod +x gradlew
-          sed -i 's/\r$//' gradlew
+          ls -la
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+            sed -i 's/\r$//' gradlew
+          else
+            echo "Error: gradlew not found in $(pwd)"
+            exit 1
+          fi
 
       - name: Build APK
         working-directory: android
