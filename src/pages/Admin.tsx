@@ -87,7 +87,7 @@ export default function Admin() {
   const copyInvite = async (code: string, id: number) => {
     // Use Telegram Web App deep link format
     // Format: https://t.me/BOT_USERNAME/APP_NAME?startapp=INVITE_CODE
-    const botName = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'Vid_dm_qwe_bot';
+    const botName = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'Vidaappbot';
     const appName = 'Call'; // Assuming 'Call' is the short name based on user request
     const link = `https://t.me/${botName}/${appName}?startapp=${code}`;
     
