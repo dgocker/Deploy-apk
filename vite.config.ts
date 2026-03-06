@@ -11,10 +11,10 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      'node:fs': false,
-      'node:path': false,
-      'fs': false,
-      'path': false,
+      'node:fs': 'empty-module',
+      'node:path': 'empty-module',
+      'fs': 'empty-module',
+      'path': 'empty-module',
     }
   },
   build: {
