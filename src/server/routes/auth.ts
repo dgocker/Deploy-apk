@@ -50,7 +50,7 @@ async function sendWelcomeMessage(telegramId: number | string) {
       },
       body: JSON.stringify({
         chat_id: telegramId,
-        text: '👋 Добро пожаловать! Теперь я в вашем списке чатов.\n\nОткрыть приложение: https://t.me/Vid_dm_qwe_bot/Call'
+        text: '👋 Добро пожаловать! Теперь я в вашем списке чатов.\n\nОткрыть приложение: https://t.me/Vidaappbot/Call'
       }),
     });
     const data = await response.json();
