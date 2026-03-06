@@ -79,15 +79,23 @@ export function usePushNotifications() {
     // Show us the notification payload if the app is open on our device
     const pushReceivedListener = PushNotifications.addListener('pushNotificationReceived', (notification) => {
       console.log('Push received: ' + JSON.stringify(notification));
-      // If it's an incoming call, the socket should also receive the 'call_incoming' event.
-      // If the socket is disconnected, we might need to reconnect it or show a local UI.
-      // For now, the socket auto-reconnects and handles 'call_incoming'.
+      
+      // If it's an incoming call, store it in the pendingCall state
+      if (notification.data && notification.data.type === 'incoming_call') {
+        console.log('Incoming call push received, storing in pendingCall');
+        useStore.getState().setPendingCall(notification.data);
+      }
     });
 
     // Method called when tapping on a notification
     const pushActionPerformedListener = PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
       console.log('Push action performed: ' + JSON.stringify(notification));
-      // Navigate to the app or specific screen if needed
+      
+      // If it's an incoming call, store it in the pendingCall state
+      if (notification.notification.data && notification.notification.data.type === 'incoming_call') {
+        console.log('Incoming call push performed, storing in pendingCall');
+        useStore.getState().setPendingCall(notification.notification.data);
+      }
     });
 
     return () => {
