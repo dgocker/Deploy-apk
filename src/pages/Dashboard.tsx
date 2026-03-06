@@ -499,7 +499,7 @@ export default function Dashboard() {
       if (res.ok) {
         // Use Telegram Web App deep link format
         // Format: https://t.me/BOT_USERNAME/APP_NAME?startapp=friend-CODE
-        const botName = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'Vid_dm_qwe_bot';
+        const botName = import.meta.env.VITE_TELEGRAM_BOT_NAME || 'Vidaappbot';
         const appName = 'Call'; // Assuming 'Call' is the short name based on user request
         const link = `https://t.me/${botName}/${appName}?startapp=friend-${data.link.code}`;
         
