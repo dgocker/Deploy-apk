@@ -18,8 +18,10 @@ public class CallForegroundService extends Service {
 
         String callerName = intent.getStringExtra("callerName");
         
-        Intent fullScreenIntent = new Intent(this, MainActivity.class);
+        // Use IncomingCallActivity instead of MainActivity for fullScreenIntent
+        Intent fullScreenIntent = new Intent(this, IncomingCallActivity.class);
         fullScreenIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP | Intent.FLAG_ACTIVITY_SINGLE_TOP);
+        fullScreenIntent.putExtra("callerName", callerName); // Pass callerName to activity
         PendingIntent fullScreenPendingIntent = PendingIntent.getActivity(this, 0,
                 fullScreenIntent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
 
