@@ -53,10 +53,11 @@ export async function sendPushNotification(fcmToken: string, title: string, body
         title: title,
         body: body,
       },
-      data: {
-        ...data,
-        type: data?.type || 'incoming_call',
-      },
+      data: data ? Object.fromEntries(
+        Object.entries({ ...data, type: data.type || 'incoming_call' })
+          .filter(([_, value]) => value !== undefined && value !== null)
+          .map(([key, value]) => [key, String(value)])
+      ) : { type: 'incoming_call' },
       token: fcmToken,
       android: {
         priority: 'high' as const,
