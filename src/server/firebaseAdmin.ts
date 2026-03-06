@@ -48,23 +48,10 @@ export async function sendPushNotification(fcmToken: string, title: string, body
   }
 
   try {
-    const message = {
-      notification: {
-        title: title,
-        body: body,
-      },
-      data: data ? Object.fromEntries(
-        Object.entries({ ...data, type: data.type || 'incoming_call' })
-          .filter(([_, value]) => value !== undefined && value !== null)
-          .map(([key, value]) => [key, String(value)])
-      ) : { type: 'incoming_call' },
+    const message: any = {
       token: fcmToken,
       android: {
         priority: 'high' as const,
-        notification: {
-          channelId: 'calls_v2',
-          sound: 'default',
-        }
       },
       apns: {
         headers: {
@@ -79,6 +66,51 @@ export async function sendPushNotification(fcmToken: string, title: string, body
         },
       },
     };
+
+    // Special handling for incoming calls (VoIP)
+    if (data && data.type === 'incoming_call') {
+      // For calls, we use data-only notification with high priority and fullScreenIntent
+      // We DO NOT set the notification field to avoid default system notification
+      message.data = {
+        ...data,
+        // Ensure all values are strings
+        ...Object.fromEntries(
+          Object.entries(data)
+            .filter(([_, value]) => value !== undefined && value !== null)
+            .map(([key, value]) => [key, String(value)])
+        )
+      };
+      
+      message.android.notification = {
+        channelId: 'call_channel', // Must match the channel created in the app
+        fullScreenIntent: true,
+        priority: 'high',
+        defaultSound: true,
+        defaultVibrateTimings: true,
+        visibility: 'public',
+      };
+    } else {
+      // Standard notification
+      message.notification = {
+        title: title,
+        body: body,
+      };
+      
+      if (data) {
+        message.data = Object.fromEntries(
+          Object.entries({ ...data, type: data.type || 'incoming_call' })
+            .filter(([_, value]) => value !== undefined && value !== null)
+            .map(([key, value]) => [key, String(value)])
+        );
+      } else {
+        message.data = { type: 'incoming_call' };
+      }
+      
+      message.android.notification = {
+        channelId: 'calls_v2',
+        sound: 'default',
+      };
+    }
 
     const response = await admin.messaging().send(message);
     console.log('Successfully sent push notification:', response);
