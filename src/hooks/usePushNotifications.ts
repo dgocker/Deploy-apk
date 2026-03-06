@@ -25,6 +25,21 @@ export function usePushNotifications() {
         if (permStatus.receive === 'granted') {
           // Register with Apple / Google to receive push via APNS/FCM
           await PushNotifications.register();
+          
+          // Create a high-priority channel for calls (Android 8+)
+          if (Capacitor.getPlatform() === 'android') {
+            await PushNotifications.createChannel({
+              id: 'calls',
+              name: 'Входящие звонки',
+              description: 'Уведомления о входящих видеозвонках',
+              importance: 5, // 5 = MAX (Heads-up notification, wakes screen)
+              visibility: 1, // 1 = PUBLIC (Shows on lock screen)
+              sound: 'ringtone', // Uses default ringtone or custom if provided
+              vibration: true,
+              lights: true,
+              lightColor: '#10B981', // Emerald 500
+            });
+          }
         } else {
           console.warn('User denied push notification permission');
         }
