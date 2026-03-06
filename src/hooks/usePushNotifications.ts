@@ -2,8 +2,7 @@ import { useEffect } from 'react';
 import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import { CallKitVoip } from '@techrover_solutions/capacitor-callkit-voip';
-// Direct import to avoid resolution issues in some build environments
-import { ForegroundService } from '@capawesome-team/capacitor-android-foreground-service/dist/esm/index';
+import { ForegroundService } from '@capawesome-team/capacitor-android-foreground-service';
 import { useStore } from '../store/useStore';
 import { getApiUrl } from '../utils/api';
 
