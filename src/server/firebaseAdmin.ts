@@ -82,6 +82,8 @@ export async function sendPushNotification(fcmToken: string, title: string, body
       };
       
       message.android.notification = {
+        title: title,
+        body: body,
         channelId: 'call_channel', // Must match the channel created in the app
         fullScreenIntent: true,
         priority: 'high',
