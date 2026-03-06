@@ -69,9 +69,29 @@ export async function sendPushNotification(fcmToken: string, title: string, body
 
     // Special handling for incoming calls (VoIP)
     if (data && data.type === 'incoming_call') {
-      // For calls, we use data-only notification with high priority
-      // We DO NOT set the notification field or android.notification field
-      // This ensures onMessageReceived is called even in background
+      // ALTERNATIVE APPROACH: Standard Notification
+      // Since Full Screen Intent is unreliable on some devices (OEM restrictions),
+      // we fallback to a standard high-priority system notification.
+      // The user must TAP the notification to answer.
+      
+      message.notification = {
+        title: title || 'Входящий звонок',
+        body: body || 'Нажмите, чтобы ответить',
+      };
+
+      message.android = {
+        priority: 'high',
+        notification: {
+          channelId: 'call_channel',
+          priority: 'high',
+          defaultSound: true,
+          defaultVibrateTimings: true,
+          visibility: 'public',
+          icon: 'ic_launcher',
+          clickAction: 'FCM_PLUGIN_ACTIVITY', // Standard for Capacitor
+        }
+      };
+
       message.data = {
         ...data,
         // Ensure all values are strings
@@ -80,12 +100,6 @@ export async function sendPushNotification(fcmToken: string, title: string, body
             .filter(([_, value]) => value !== undefined && value !== null)
             .map(([key, value]) => [key, String(value)])
         )
-      };
-      
-      // Set high priority for data message
-      message.android = {
-        priority: 'high',
-        ttl: 0, // Deliver immediately or drop
       };
       
       // Remove apns payload for Android if strictly targeting Android, 
