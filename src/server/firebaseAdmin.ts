@@ -61,7 +61,7 @@ export async function sendPushNotification(fcmToken: string, title: string, body
       android: {
         priority: 'high' as const,
         notification: {
-          channelId: 'calls',
+          channelId: 'calls_v2',
           sound: 'default',
         }
       },
