@@ -2,6 +2,8 @@ import admin from 'firebase-admin';
 import fs from 'fs';
 import path from 'path';
 
+export { admin };
+
 export function initFirebaseAdmin() {
   try {
     let serviceAccount;
