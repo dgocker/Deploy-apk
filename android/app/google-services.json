@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "205642771852",
+    "project_id": "vidapp-4b8a2",
+    "storage_bucket": "vidapp-4b8a2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:205642771852:android:a2b541c6154887904cfaa9",
+        "android_client_info": {
+          "package_name": "com.videochat.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "205642771852-8jm7jt2hoaihe3nob2raecf4h4up9iuc.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.videochat.app",
+            "certificate_hash": "cb76bb2393b27e080fcf4937fefe97301a577af2"
+          }
+        },
+        {
+          "client_id": "205642771852-il3rdhpvgiigko13giivjedvahfa2tf4.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.videochat.app",
+            "certificate_hash": "5db1c1ba83f7d66462c71ce02cd2a6f86101ce1b"
+          }
+        },
+        {
+          "client_id": "205642771852-1ijv9adpqm8c4g8rtt5hi5qeorbjcamq.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAop0PbhriCKjJUywUiMYwGXMFg0d4wEp4"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "205642771852-1ijv9adpqm8c4g8rtt5hi5qeorbjcamq.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
