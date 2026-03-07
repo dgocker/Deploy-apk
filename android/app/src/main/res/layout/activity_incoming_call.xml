@@ -1,37 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#222">
+    android:orientation="vertical"
+    android:gravity="center"
+    android:background="#FF000000"> <!-- Тёмный фон -->
 
     <TextView
-        android:id="@+id/callerName"
+        android:id="@+id/caller_name"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_marginTop="100dp"
-        android:textColor="#FFF"
-        android:textSize="32sp"
-        android:text="Calling..." />
+        android:text="Входящий звонок"
+        android:textSize="24sp"
+        android:textColor="#FFFFFF" />
 
     <Button
-        android:id="@+id/btnAccept"
+        android:id="@+id/accept_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentLeft="true"
-        android:layout_marginBottom="50dp"
-        android:layout_marginLeft="50dp"
-        android:text="Accept" />
+        android:text="Принять"
+        android:backgroundTint="#00FF00" />
 
     <Button
-        android:id="@+id/btnReject"
+        android:id="@+id/reject_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_alignParentRight="true"
-        android:layout_marginBottom="50dp"
-        android:layout_marginRight="50dp"
-        android:text="Reject" />
-
-</RelativeLayout>
+        android:text="Отклонить"
+        android:backgroundTint="#FF0000" />
+</LinearLayout>
