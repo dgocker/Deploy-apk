@@ -1,58 +1,26 @@
-package com.videochat.app;
+import android.telecom.PhoneAccount;
+import android.telecom.TelecomManager;
+import android.content.ComponentName;
+import android.graphics.drawable.Icon;
 
-import com.getcapacitor.BridgeActivity;
-import android.os.Bundle;
-import android.content.Context;
-import android.content.Intent;
-import android.net.Uri;
-import android.os.PowerManager;
-import android.provider.Settings;
-import android.view.WindowManager;
-import android.app.KeyguardManager;
-import android.os.Build;
+private void registerPhoneAccount() {
+    TelecomManager telecomManager = (TelecomManager) getSystemService(TELECOM_SERVICE);
+    if (telecomManager == null) return;
 
-public class MainActivity extends BridgeActivity {
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
+    ComponentName componentName = new ComponentName(this, MyConnectionService.class);
+    PhoneAccountHandle handle = new PhoneAccountHandle(componentName, "videochat_account"); // совпадает с твоим кодом
 
-        // Turn screen on and show over lock screen
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O_MR1) {
-            setShowWhenLocked(true);
-            setTurnScreenOn(true);
-            KeyguardManager keyguardManager = (KeyguardManager) getSystemService(Context.KEYGUARD_SERVICE);
-            if (keyguardManager != null) {
-                keyguardManager.requestDismissKeyguard(this, null);
-            }
-        } else {
-            getWindow().addFlags(WindowManager.LayoutParams.FLAG_DISMISS_KEYGUARD |
-                    WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED |
-                    WindowManager.LayoutParams.FLAG_TURN_SCREEN_ON |
-                    WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
-        }
+    PhoneAccount.Builder builder = PhoneAccount.builder(handle, "VideoChat App")
+        .setCapabilities(PhoneAccount.CAPABILITY_SELF_MANAGED)
+        .setIcon(Icon.createWithResource(this, R.drawable.ic_launcher)) // твой иконка
+        .setShortDescription("Video calls");
 
-        // Request to ignore battery optimizations for VoIP calls
-        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
-        if (!pm.isIgnoringBatteryOptimizations(getPackageName())) {
-            Intent intent = new Intent();
-            intent.setAction(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS);
-            intent.setData(Uri.parse("package:" + getPackageName()));
-            startActivity(intent);
-        }
+    PhoneAccount phoneAccount = builder.build();
 
-        // Register PhoneAccount for Telecom API
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            android.telecom.TelecomManager telecomManager = (android.telecom.TelecomManager) getSystemService(Context.TELECOM_SERVICE);
-            android.telecom.PhoneAccountHandle handle = new android.telecom.PhoneAccountHandle(
-                    new android.content.ComponentName(this, MyConnectionService.class),
-                    "videochat_account"
-            );
-
-            android.telecom.PhoneAccount phoneAccount = android.telecom.PhoneAccount.builder(handle, "VideoChat Calls")
-                    .setCapabilities(android.telecom.PhoneAccount.CAPABILITY_CALL_PROVIDER)
-                    .build();
-
-            telecomManager.registerPhoneAccount(phoneAccount);
-        }
+    try {
+        telecomManager.registerPhoneAccount(phoneAccount);
+        Log.d("MainActivity", "✅ PhoneAccount registered!");
+    } catch (SecurityException e) {
+        Log.e("MainActivity", "❌ Error registering PhoneAccount: " + e.getMessage());
     }
 }
